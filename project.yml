@@ -1,0 +1,130 @@
+name: iRubikCube
+options:
+  bundleIdPrefix: dev.ividi
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: S769436W24
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+  configs:
+    Debug:
+      ENABLE_TESTABILITY: YES
+
+targets:
+  iRubikCube:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes:
+          - "CubeCore/**"
+      - path: Resources
+    dependencies:
+      - target: CubeCore
+    entitlements:
+      path: Config/iRubikCube.entitlements
+      properties:
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+    info:
+      path: Config/Info-iOS.plist
+      properties:
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        CFBundleDisplayName: iRubikCube
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSCameraUsageDescription: "iRubikCube uses the camera to read the colours of your real cube, face by face."
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        LSApplicationCategoryType: public.app-category.puzzle-games
+        NSHumanReadableCopyright: Copyright © David Arsénio Martins
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleLocalizations:
+          - en
+          - pt-PT
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ividi.irubikcube
+        PRODUCT_NAME: iRubikCube
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: false
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  CubeCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Sources/CubeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ividi.irubikcube.cubecore
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        # The solver builds large tables; keep it fast in Debug builds and tests too.
+        SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+  CubeCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/CubeCoreTests
+    dependencies:
+      - target: CubeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ividi.irubikcube.cubecoretests
+        GENERATE_INFOPLIST_FILE: YES
+
+  iRubikCubeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/iRubikCubeTests
+    dependencies:
+      - target: iRubikCube
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ividi.irubikcube.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/iRubikCube.app/iRubikCube
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  iRubikCube:
+    build:
+      targets:
+        iRubikCube: all
+        CubeCore: all
+        CubeCoreTests: [test]
+        iRubikCubeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - CubeCoreTests
+        - iRubikCubeTests
+  CubeCore:
+    build:
+      targets:
+        CubeCore: all
+        CubeCoreTests: [test]
+    test:
+      config: Debug
+      targets:
+        - CubeCoreTests

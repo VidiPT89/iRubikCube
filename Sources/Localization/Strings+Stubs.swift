@@ -1,0 +1,15 @@
+extension Strings {
+    static let home: [String: Pair] = [:]
+    static let settings: [String: Pair] = [:]
+    static let play: [String: Pair] = [:]
+    static let assist: [String: Pair] = [:]
+    static let stages: [String: Pair] = [:]
+    static let scanner: [String: Pair] = [:]
+    static let stats: [String: Pair] = [:]
+    static let learn: [String: Pair] = [:]
+    static let lessons: [String: Pair] = [:]
+    static let lessonSteps: [String: Pair] = [:]
+    static let achievements: [String: Pair] = [:]
+    static let notation: [String: Pair] = [:]
+    static let a11y: [String: Pair] = [:]
+}
