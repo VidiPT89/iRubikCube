@@ -63,12 +63,14 @@ extension CubeScene {
     func buildStage() {
         let shadow = Entity()
         shadow.position = [0, -0.92, 0]
-        for ring in 0..<7 {
-            let radius = 0.95 - Float(ring) * 0.11
+        // Many faint discs stacked from wide to narrow read as a soft blur.
+        let rings = 18
+        for ring in 0..<rings {
+            let radius = 0.85 - Float(ring) * 0.042
             var material = UnlitMaterial(color: .black)
-            material.blending = .transparent(opacity: .init(floatLiteral: 0.07))
+            material.blending = .transparent(opacity: .init(floatLiteral: 0.032))
             let disc = ModelEntity(mesh: .generateCylinder(height: 0.001, radius: radius), materials: [material])
-            disc.position.y = Float(ring) * 0.0005
+            disc.position.y = Float(ring) * 0.0004
             disc.scale = [1, 1, 0.55]
             shadow.addChild(disc)
         }

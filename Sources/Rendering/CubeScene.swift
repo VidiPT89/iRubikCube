@@ -41,8 +41,7 @@ final class CubeScene {
     @ObservationIgnored var onTurnStarted: ((Turn) -> Void)?
     /// A layer passed a 90° step while dragging.
     @ObservationIgnored var onDragDetent: (() -> Void)?
-    /// Every queued animation has finished.
-    @ObservationIgnored var onIdle: (() -> Void)?
+    @ObservationIgnored private var idleActions: [() -> Void] = []
 
     // MARK: Entities
 
@@ -85,6 +84,7 @@ final class CubeScene {
     @ObservationIgnored var celebration: Float?
     @ObservationIgnored var hintPhase: Float = 0
     @ObservationIgnored var idleSpinPause: Double = 0
+    @ObservationIgnored var assembly: AssemblyState?
 
     init(size: Int = 3, state: CubeState? = nil) {
         self.size = size
@@ -96,10 +96,17 @@ final class CubeScene {
     }
 
     /// Adds the scene to a `RealityView` and starts the frame loop.
+    ///
+    /// SwiftUI may build a second RealityView before tearing the first one
+    /// down, and a torn-down view removes whatever it added. Each install
+    /// therefore adds a fresh holder and moves the cube into it, so the old
+    /// view only takes its own empty holder with it.
     func install(into content: inout RealityViewCameraContent) {
-        content.add(root)
-        content.add(stageEntity)
-        content.add(camera)
+        let holder = Entity()
+        holder.addChild(root)
+        holder.addChild(stageEntity)
+        holder.addChild(camera)
+        content.add(holder)
         content.environment = .default
         subscription = content.subscribe(to: SceneEvents.Update.self) { [weak self] event in
             self?.tick(event.deltaTime)
@@ -126,6 +133,22 @@ final class CubeScene {
         hideHint()
         recolor()
         isAnimating = false
+        runIdleActions()
+    }
+
+    /// Runs `action` once every queued turn has been animated.
+    func whenIdle(_ action: @escaping () -> Void) {
+        if current == nil && queue.isEmpty {
+            action()
+        } else {
+            idleActions.append(action)
+        }
+    }
+
+    private func runIdleActions() {
+        let actions = idleActions
+        idleActions.removeAll()
+        actions.forEach { $0() }
     }
 
     /// Animates `turns` one after another.
@@ -149,6 +172,7 @@ final class CubeScene {
         resetLayerTransforms()
         recolor()
         isAnimating = false
+        runIdleActions()
     }
 
     func resetView(animated: Bool = true) {
@@ -176,6 +200,7 @@ final class CubeScene {
         advanceSnap(dt)
         advanceView(Float(dt))
         advanceHint(Float(dt))
+        advanceAssembly(Float(dt))
     }
 
     private func advanceTurns(_ dt: TimeInterval) {
@@ -200,7 +225,7 @@ final class CubeScene {
             recolor()
             if queue.isEmpty {
                 isAnimating = false
-                onIdle?()
+                runIdleActions()
             }
         }
     }

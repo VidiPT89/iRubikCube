@@ -88,12 +88,12 @@ public enum BeginnerSolver {
 
     // MARK: Stage goals
 
-    static let sideFaces: [Face] = [.F, .R, .B, .L]
-    static let crossEdges: [[Face]] = sideFaces.map { [.D, $0] }
-    static let bottomCorners: [[Face]] = (0..<4).map { [.D, sideFaces[$0], sideFaces[($0 + 1) % 4]] }
-    static let middleEdges: [[Face]] = (0..<4).map { [sideFaces[$0], sideFaces[($0 + 1) % 4]] }
-    static let topEdges: [[Face]] = sideFaces.map { [.U, $0] }
-    static let topCorners: [[Face]] = (0..<4).map { [.U, sideFaces[$0], sideFaces[($0 + 1) % 4]] }
+    public static let sideFaces: [Face] = [.F, .R, .B, .L]
+    public static let crossEdges: [[Face]] = sideFaces.map { [.D, $0] }
+    public static let bottomCorners: [[Face]] = (0..<4).map { [.D, sideFaces[$0], sideFaces[($0 + 1) % 4]] }
+    public static let middleEdges: [[Face]] = (0..<4).map { [sideFaces[$0], sideFaces[($0 + 1) % 4]] }
+    public static let topEdges: [[Face]] = sideFaces.map { [.U, $0] }
+    public static let topCorners: [[Face]] = (0..<4).map { [.U, sideFaces[$0], sideFaces[($0 + 1) % 4]] }
 
     public static func isComplete(_ stage: BeginnerStage, in cube: CubeState) -> Bool {
         switch stage {
