@@ -52,7 +52,7 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let systemImage { Image(systemName: systemImage).font(.system(size: 15, weight: .bold)) }
-                Text(title).font(.rounded(16, .bold))
+                Text(title).font(.rounded(16, .bold)).lineLimit(1).fixedSize()
             }
             .foregroundStyle(Color(hex: 0x0A0A0F))
             .padding(.horizontal, 20)

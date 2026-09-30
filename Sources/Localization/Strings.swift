@@ -41,7 +41,7 @@ enum Strings {
         "common.moves": ("Movimentos", "Moves"),
         "common.movesCount": ("%d movimentos", "%d moves"),
         "common.time": ("Tempo", "Time"),
-        "common.none": ("—", "—"),
+        "common.none": ("–", "–"),
         "common.size": ("%d×%d", "%d×%d"),
     ]
 
