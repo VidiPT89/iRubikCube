@@ -38,7 +38,7 @@ public enum LessonID: String, CaseIterable, Sendable, Codable, Identifiable {
     public var algorithms: [Algorithm] {
         switch self {
         case .anatomy, .notation, .whiteCross: []
-        case .whiteCorners: [Algorithms.sexy]
+        case .whiteCorners: Algorithms.cornerTriggers + [Algorithms.sexy]
         case .middleEdges: [Algorithms.rightInsert, Algorithms.leftInsert]
         case .yellowCross: [Algorithms.yellowCross]
         case .yellowFace: [Algorithms.sune, Algorithms.antiSune]
@@ -146,7 +146,8 @@ public enum LessonCoach {
         return Turn.simplify(BeginnerSolver.macroSearch(cube, macros: macros, maxDepth: depth, goal: goal)?.flatMap(\.turns) ?? [])
     }
 
-    static func inverse(of turns: [Turn]) -> [Turn] { turns.reversed().map(\.inverse) }
+    /// The turns that undo `turns`.
+    public static func inverse(of turns: [Turn]) -> [Turn] { turns.reversed().map(\.inverse) }
 
     private static func randomAdjustment<G: RandomNumberGenerator>(using rng: inout G) -> [Turn] {
         let amount = Int.random(in: 0..<4, using: &rng)

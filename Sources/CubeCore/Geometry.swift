@@ -84,31 +84,11 @@ public enum Face: Int, CaseIterable, Sendable, Codable {
         default: return nil
         }
     }
-
-    public static func facing(_ normal: Vec3) -> Face? {
-        Face.allCases.first { $0.normal == normal }
-    }
 }
 
 /// The six sticker colours of the standard (Western) colour scheme.
 public enum CubeColor: Int, CaseIterable, Sendable, Codable {
     case white, red, green, yellow, orange, blue
-
-    public var letter: Character {
-        switch self {
-        case .white: "W"
-        case .red: "R"
-        case .green: "G"
-        case .yellow: "Y"
-        case .orange: "O"
-        case .blue: "B"
-        }
-    }
-
-    public init?(letter: Character) {
-        guard let match = CubeColor.allCases.first(where: { $0.letter == letter }) else { return nil }
-        self = match
-    }
 
     /// Solved-cube colour of each face: white up, green front, red right.
     public static func standard(for face: Face) -> CubeColor {

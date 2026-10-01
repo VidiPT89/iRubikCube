@@ -88,15 +88,6 @@ public struct CubeState: Hashable, Sendable, Codable {
         copy.apply(turns)
         return copy
     }
-
-    /// Compact text form, one colour letter per sticker (W R G Y O B).
-    public var colorString: String { String(stickers.map(\.letter)) }
-
-    public init?(size: Int, colorString: String) {
-        let colors = colorString.compactMap(CubeColor.init(letter:))
-        guard colors.count == colorString.count else { return nil }
-        self.init(size: size, stickers: colors)
-    }
 }
 
 /// Where every sticker sits in space, shared by all states of one size.

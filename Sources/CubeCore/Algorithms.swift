@@ -30,6 +30,11 @@ public struct Algorithm: Hashable, Sendable, Identifiable {
 public enum Algorithms {
     // Beginner method
     public static let sexy = Algorithm(id: "sexy", notation: "R U R' U'")
+    /// Corner triggers: white facing right, front or up, corner above its slot.
+    public static let cornerRight = Algorithm(id: "cornerRight", notation: "R U R'")
+    public static let cornerFront = Algorithm(id: "cornerFront", notation: "F' U' F")
+    public static let cornerUp = Algorithm(id: "cornerUp", notation: "R U2 R' U' R U R'")
+    public static let cornerTriggers = [cornerRight, cornerFront, cornerUp]
     public static let rightInsert = Algorithm(id: "rightInsert", notation: "U R U' R' U' F' U F")
     public static let leftInsert = Algorithm(id: "leftInsert", notation: "U' L' U L U F U' F'")
     public static let yellowCross = Algorithm(id: "yellowCross", notation: "F R U R' U' F'")

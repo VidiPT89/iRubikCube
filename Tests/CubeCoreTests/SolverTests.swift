@@ -98,6 +98,16 @@ struct SolverTests {
         }
     }
 
+    @Test("Beginner solutions stay a sensible length")
+    func beginnerLength() throws {
+        var total = 0
+        for _ in 0..<200 {
+            let steps = try BeginnerSolver.solve(CubeState().applying(Scrambler.scramble(size: 3)))
+            total += steps.reduce(0) { $0 + $1.turns.count }
+        }
+        #expect(Double(total) / 200 < 130, "Average \(Double(total) / 200)")
+    }
+
     @Test("Where am I: stage detection")
     func stageDetection() {
         #expect(BeginnerSolver.stage(of: CubeState()) == .solved)

@@ -253,6 +253,9 @@ public enum BeginnerSolver {
         for k in 0..<4 {
             let front = sideFaces[k]
             let right = sideFaces[(k + 1) % 4]
+            for trigger in Algorithms.cornerTriggers {
+                macros.append(Macro(turns: trigger.turns(front: front, right: right), algorithm: trigger.id))
+            }
             let once = Algorithms.sexy.turns(front: front, right: right)
             for repeats in 1...5 {
                 macros.append(Macro(turns: Array(repeating: once, count: repeats).flatMap { $0 },
@@ -270,7 +273,8 @@ public enum BeginnerSolver {
             else { continue }
             let turns = Turn.simplify(path.flatMap(\.turns))
             cube.apply(turns)
-            steps.append(SolveStep(stage: .whiteCorners, turns: turns, piece: colors, algorithm: Algorithms.sexy.id))
+            let algorithm = path.last { !$0.isAdjustment }?.algorithm
+            steps.append(SolveStep(stage: .whiteCorners, turns: turns, piece: colors, algorithm: algorithm))
         }
         return steps
     }

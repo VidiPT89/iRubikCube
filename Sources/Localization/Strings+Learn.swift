@@ -85,8 +85,8 @@ extension Strings {
         "lesson.whiteCorners.subtitle": ("Fechar a primeira camada", "Finish the first layer"),
         "lesson.whiteCorners.why": ("Com a cruz feita, faltam os quatro cantos para completar a primeira camada. Usamos um movimento curto que traz o canto para baixo sem estragar a cruz.",
                                     "With the cross done, four corners are missing from the first layer. We use a short move that brings the corner down without breaking the cross."),
-        "lesson.whiteCorners.how": ("Coloca o canto em cima, por cima do sítio onde tem de ir (à frente e à direita). Repete R U R' U' até ele ficar certo: às vezes basta uma vez, às vezes são cinco. Se o canto estiver em baixo no sítio errado, faz o movimento uma vez para o tirar de lá.",
-                                    "Put the corner on top, above the spot where it belongs (front right). Repeat R U R' U' until it is right: sometimes once is enough, sometimes it takes five. If the corner is at the bottom in the wrong place, do the move once to pop it out."),
+        "lesson.whiteCorners.how": ("Coloca o canto em cima, por cima do sítio onde tem de ir (à frente e à direita). Vê para onde está virado o branco: para a direita faz R U R', para a frente faz F' U' F, para cima faz R U2 R' U' R U R'. Se te baralhares, há um truque que funciona sempre: repete R U R' U' até o canto ficar certo. Se o canto estiver em baixo no sítio errado, faz R U R' uma vez para o tirar de lá.",
+                                    "Put the corner on top, above the spot where it belongs (front right). Check where the white faces: right, do R U R'; front, do F' U' F; up, do R U2 R' U' R U R'. If you get lost, one trick always works: repeat R U R' U' until the corner is right. If the corner is at the bottom in the wrong place, do R U R' once to pop it out."),
         "lesson.middleEdges.title": ("Camada do meio", "Middle layer"),
         "lesson.middleEdges.subtitle": ("Duas camadas feitas", "Two layers done"),
         "lesson.middleEdges.why": ("As quatro arestas sem amarelo pertencem à camada do meio. Metê-las no sítio sem mexer na primeira camada exige um algoritmo que tira o canto do caminho e o repõe logo a seguir.",
@@ -141,6 +141,9 @@ extension Strings {
 
     static let lessonSteps: [String: Pair] = [
         "algorithm.sexy": ("Movimento básico", "Sexy move"),
+        "algorithm.cornerRight": ("Branco à direita", "White facing right"),
+        "algorithm.cornerFront": ("Branco à frente", "White facing front"),
+        "algorithm.cornerUp": ("Branco para cima", "White facing up"),
         "algorithm.rightInsert": ("Aresta para a direita", "Right-hand edge"),
         "algorithm.leftInsert": ("Aresta para a esquerda", "Left-hand edge"),
         "algorithm.yellowCross": ("Cruz amarela", "Yellow cross"),
