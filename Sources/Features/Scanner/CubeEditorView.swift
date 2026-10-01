@@ -7,6 +7,7 @@ struct CubeEditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.palette) private var palette
     @Environment(\.dismiss) private var dismiss
+    var showsCancel = false
     let onDone: (CubeState) -> Void
 
     @State private var stickers: [CubeColor?]
@@ -14,9 +15,10 @@ struct CubeEditorView: View {
     @State private var errorKey: String?
     @State private var shake = 0
 
-    init(start: CubeState, onDone: @escaping (CubeState) -> Void) {
+    init(start: CubeState, showsCancel: Bool = false, onDone: @escaping (CubeState) -> Void) {
         let usable = start.size == 3 ? start : CubeState()
         _stickers = State(initialValue: usable.stickers.map { Optional($0) })
+        self.showsCancel = showsCancel
         self.onDone = onDone
     }
 
@@ -66,8 +68,10 @@ struct CubeEditorView: View {
         .navigationTitle(app.t("editor.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(app.t("common.cancel")) { dismiss() }
+            if showsCancel {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(app.t("common.cancel")) { dismiss() }
+                }
             }
         }
         .animation(.spring(response: 0.35), value: errorKey)

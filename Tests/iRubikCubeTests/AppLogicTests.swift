@@ -110,6 +110,22 @@ struct AppLogicTests {
         #expect(model.moves == 1)
     }
 
+    @Test("Restart puts the same scramble back and resets the clock")
+    func restart() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        let scrambled = model.session.state
+        model.session.perform(.face(.R))
+        #expect(model.phase == .solving)
+        model.restart()
+        #expect(model.session.state == scrambled)
+        #expect(model.phase == .waiting)
+        #expect(model.moves == 0)
+        #expect(model.elapsed(at: .now) == 0)
+    }
+
     // MARK: Progress
 
     @Test("Achievements unlock once and a week of play makes a streak")

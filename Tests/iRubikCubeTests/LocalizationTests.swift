@@ -46,7 +46,7 @@ struct LocalizationTests {
         keys += LessonID.allCases.filter(\.hasPractice).map { "practice.goal.\($0.rawValue)" }
         keys += LessonID.Section.allCases.map { "learn.section.\($0.rawValue)" }
         keys += Achievement.allCases.flatMap { ["achievement.\($0.rawValue).title", "achievement.\($0.rawValue).detail"] }
-        keys += (Algorithms.all + [Algorithms.ollLine]).map { "algorithm.\($0.id)" }
+        keys += (Algorithms.all + Algorithms.cornerTriggers + [Algorithms.ollLine]).map { "algorithm.\($0.id)" }
         keys += CubeColor.allCases.map { "color.\($0)" }
         keys += Face.allCases.map { "face.\($0.letter)" }
         keys += ["R", "L", "U", "D", "F", "B", "M", "E", "S", "x", "y", "z", "Rw", "Uw", "Fw"].map { "notation.name.\($0)" }

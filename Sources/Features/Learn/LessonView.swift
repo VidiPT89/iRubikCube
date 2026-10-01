@@ -5,6 +5,7 @@ struct LessonView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.palette) private var palette
     @State private var model: LessonModel
+    @State private var glow = 0.0
 
     init(lesson: LessonID, app: AppModel) {
         _model = State(initialValue: LessonModel(lesson: lesson, app: app))
@@ -52,9 +53,16 @@ struct LessonView: View {
 
     private var cube: some View {
         ZStack(alignment: .bottom) {
+            RadialGradient(colors: [palette.success.opacity(0.45 * glow), .clear], center: .center,
+                           startRadius: 20, endRadius: 220)
+                .allowsHitTesting(false)
             CubeView(scene: model.session.scene,
                      accessibilityLabel: app.t("a11y.cube"),
                      accessibilityValue: CubeDescriber.describe(model.session.state, app: app))
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(palette.success, lineWidth: 3)
+                .opacity(glow)
+                .allowsHitTesting(false)
             if let token = model.demoToken, model.tab == .how, model.lesson == .notation, model.quiz == nil {
                 Text(token).font(.mono(28, .heavy)).foregroundStyle(palette.textGradient)
                     .padding(.horizontal, 16).padding(.vertical, 6)
@@ -64,6 +72,10 @@ struct LessonView: View {
             }
         }
         .animation(.spring(response: 0.35), value: model.demoToken)
+        .onChange(of: model.correctMoves) { _, _ in
+            glow = 1
+            withAnimation(.easeOut(duration: 0.9)) { glow = 0 }
+        }
     }
 
     private var tabPicker: some View {

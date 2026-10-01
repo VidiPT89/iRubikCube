@@ -58,7 +58,7 @@ struct AssistView: View {
         }
         .fullScreenCover(isPresented: $showEditor) {
             NavigationStack {
-                CubeEditorView(start: model.session.state) { state in
+                CubeEditorView(start: model.session.state, showsCancel: true) { state in
                     model.load(state)
                     showEditor = false
                 }
@@ -68,7 +68,7 @@ struct AssistView: View {
         }
         .fullScreenCover(isPresented: $showScanner) {
             NavigationStack {
-                ScannerView { state in
+                ScannerView(showsCancel: true) { state in
                     model.load(state)
                     showScanner = false
                 }

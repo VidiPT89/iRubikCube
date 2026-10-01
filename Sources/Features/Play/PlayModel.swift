@@ -101,13 +101,16 @@ final class PlayModel {
         }
     }
 
-    func reset() {
+    /// Starts the same scramble again from the beginning.
+    func restart() {
+        guard !scramble.isEmpty else { return }
         stopClock()
-        phase = .idle
-        scramble = []
         moves = 0
+        solveTurns = []
         result = nil
-        session.load(CubeState(size: size))
+        session.load(CubeState(size: size).applying(scramble))
+        phase = .scrambling
+        scrambleFinished()
     }
 
     func togglePause() {

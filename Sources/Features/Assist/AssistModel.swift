@@ -25,7 +25,13 @@ final class AssistModel {
     }
 
     let session: CubeSession
-    var method: Method = .optimal { didSet { if method != oldValue { invalidate() } } }
+    var method: Method = .optimal {
+        didSet {
+            guard method != oldValue else { return }
+            stopPlayback()
+            invalidate()
+        }
+    }
     private(set) var isComputing = false
     private(set) var solution: [Turn]?
     private(set) var steps: [SolveStep]?

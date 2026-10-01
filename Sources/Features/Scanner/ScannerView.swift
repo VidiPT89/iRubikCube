@@ -7,6 +7,8 @@ struct ScannerView: View {
     @Environment(\.palette) private var palette
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    /// Show a Cancel button (when presented modally rather than pushed).
+    var showsCancel = false
     let onDone: (CubeState) -> Void
 
     @State private var camera = CameraController()
@@ -37,8 +39,10 @@ struct ScannerView: View {
         .navigationTitle(app.t("scanner.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(app.t("common.cancel")) { dismiss() }
+            if showsCancel {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(app.t("common.cancel")) { dismiss() }
+                }
             }
         }
         .navigationDestination(item: $reviewColors) { colors in

@@ -40,6 +40,8 @@ final class LessonModel {
     private(set) var expected: [Turn] = []
     private(set) var goalReached = false
     private(set) var confetti = 0
+    /// Bumped on every right move, to flash the cube green.
+    private(set) var correctMoves = 0
     private(set) var anatomy: Anatomy = .centers
     private(set) var demoToken: String?
     private(set) var playingAlgorithm: String?
@@ -102,7 +104,7 @@ final class LessonModel {
 
     /// Shows the case an algorithm solves, then solves it slowly.
     func watch(_ algorithm: Algorithm) {
-        let start = Self.demoState(for: lesson).applying(LessonCoach.inverseTurns(algorithm.turns))
+        let start = Self.demoState(for: lesson).applying(LessonCoach.inverse(of: algorithm.turns))
         session.load(start)
         session.scene.highlighted = nil
         playingAlgorithm = algorithm.id
@@ -203,6 +205,7 @@ final class LessonModel {
             reachGoal()
         } else if wasExpected {
             feedback = .correct
+            correctMoves += 1
             app?.play(.correct)
         } else {
             feedback = .wrong(turn)
@@ -299,8 +302,4 @@ final class LessonModel {
             }
         }
     }
-}
-
-extension LessonCoach {
-    static func inverseTurns(_ turns: [Turn]) -> [Turn] { turns.reversed().map(\.inverse) }
 }

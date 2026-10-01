@@ -19,6 +19,7 @@ extension CubeScene {
         cubies.removeAll()
         stickerEntities.removeAll()
         glyphEntities.removeAll()
+        glyphMeshes.removeAll()
         rebuildMaterialsOnly()
 
         let s = cubieSize
@@ -145,7 +146,7 @@ extension CubeScene {
             sticker.model?.materials = [material]
 
             let glyph = glyphEntities[index]
-            if showGlyphs, !dim, let mesh = glyphMesh(for: CubeScheme.glyph(for: color)) {
+            if showGlyphs, !dim, let mesh = cachedGlyphMesh(for: CubeScheme.glyph(for: color)) {
                 glyph.model = ModelComponent(mesh: mesh.mesh, materials: [materials.glyph])
                 glyph.orientation = mesh.rotation
                 glyph.isEnabled = true
@@ -153,6 +154,14 @@ extension CubeScene {
                 glyph.isEnabled = false
             }
         }
+    }
+
+    /// Glyph meshes are built once per cube size, not on every recolour.
+    private func cachedGlyphMesh(for glyph: CubeScheme.Glyph) -> (mesh: MeshResource, rotation: simd_quatf)? {
+        if let cached = glyphMeshes[glyph] { return cached }
+        guard let made = glyphMesh(for: glyph) else { return nil }
+        glyphMeshes[glyph] = made
+        return made
     }
 
     private func glyphMesh(for glyph: CubeScheme.Glyph) -> (mesh: MeshResource, rotation: simd_quatf)? {

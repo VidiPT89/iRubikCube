@@ -1,6 +1,7 @@
 import CubeCore
 import Observation
 import SwiftUI
+import UIKit
 
 /// The logical cube behind a screen, its undo/redo history and the 3D scene
 /// that shows it. Play, Assist and Learn each own one.
@@ -39,9 +40,9 @@ final class CubeSession {
     var size: Int { state.size }
     var canUndo: Bool { !history.isEmpty }
     var canRedo: Bool { !future.isEmpty }
-    var moveCount: Int { history.count }
 
     func applySettings() {
+        scene.reduceMotion = UIAccessibility.isReduceMotionEnabled
         guard let model else { return }
         scene.turnDuration = model.settings.animationSpeed.quarterTurn
         scene.scheme = model.settings.cubeScheme
@@ -111,7 +112,4 @@ final class CubeSession {
         future.removeAll()
         scene.whenIdle { [weak self] in self?.scene.turnDuration = previous }
     }
-
-    /// Readable move history in notation.
-    var historyText: String { Notation.format(history, size: size) }
 }

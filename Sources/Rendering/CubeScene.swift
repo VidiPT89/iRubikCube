@@ -31,6 +31,8 @@ final class CubeScene {
     /// Seconds per quarter turn.
     var turnDuration: Double = 0.26
     var autoRotate = false
+    /// Skips the celebratory spin (Reduce Motion).
+    var reduceMotion = false
     /// Stickers to keep bright; everything else is dimmed. `nil` shows all.
     var highlighted: Set<Int>? { didSet { if highlighted != oldValue { recolor() } } }
     var isAnimating = false
@@ -54,6 +56,7 @@ final class CubeScene {
     @ObservationIgnored var glyphEntities: [ModelEntity] = []
     @ObservationIgnored var hintEntity: Entity?
     @ObservationIgnored var materials = MaterialSet()
+    @ObservationIgnored var glyphMeshes: [CubeScheme.Glyph: (mesh: MeshResource, rotation: simd_quatf)] = [:]
     @ObservationIgnored private var subscription: EventSubscription?
 
     // MARK: Camera
@@ -189,6 +192,7 @@ final class CubeScene {
 
     /// A full spin of the whole cube, for the solved celebration.
     func celebrate() {
+        guard !reduceMotion else { return }
         celebration = 0
     }
 

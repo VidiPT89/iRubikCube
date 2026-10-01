@@ -10,7 +10,6 @@ final class Haptics {
         case detent
         /// A layer settling into place.
         case snap
-        case correct
         case warning
         /// Long celebratory pattern when the cube is solved.
         case solved
@@ -46,7 +45,6 @@ final class Haptics {
         case .detent: custom([(0, 0.45, 0.9)], fallback: { light.impactOccurred(intensity: 0.6) })
         case .snap: custom([(0, 0.75, 0.55)], fallback: { medium.impactOccurred() })
         case .tap: light.impactOccurred(intensity: 0.5)
-        case .correct: notifier.notificationOccurred(.success)
         case .warning: notifier.notificationOccurred(.warning)
         case .solved:
             let beats: [(TimeInterval, Float, Float)] = [

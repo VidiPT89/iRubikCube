@@ -60,6 +60,7 @@ extension Strings {
         "play.pause": ("Pausa", "Pause"),
         "play.paused": ("Em pausa", "Paused"),
         "play.resume": ("Continuar", "Resume"),
+        "play.restart": ("Reiniciar com o mesmo baralhar", "Restart with the same scramble"),
         "play.togglePad": ("Mostrar ou ocultar a notação", "Show or hide notation"),
         "play.historyEmpty": ("Os teus movimentos aparecem aqui", "Your moves show up here"),
         "play.inspection": ("Inspeção", "Inspection"),

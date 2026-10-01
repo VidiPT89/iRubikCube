@@ -21,12 +21,15 @@ final class AppModel {
     @ObservationIgnored let haptics = Haptics()
     @ObservationIgnored private let cloud = CloudSync()
     @ObservationIgnored private var started = false
+    @ObservationIgnored private let defaults: UserDefaults
 
     var toast: Toast?
     var presentationDepth = 0
     @ObservationIgnored private var toastTask: Task<Void, Never>?
+    @ObservationIgnored private var queuedToasts: [Toast] = []
 
     init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         settings = AppSettings(defaults: defaults)
         progress = ProgressStore(defaults: defaults)
     }
@@ -52,10 +55,10 @@ final class AppModel {
         }
         cloud.start()
         if let remote = cloud.pull(ProgressStore.storageKey) { progress.merge(remote) }
-        if let remote = cloud.pull(AppSettings.storageKey), UserDefaults.standard.data(forKey: AppSettings.storageKey) == nil {
+        if let remote = cloud.pull(AppSettings.storageKey), defaults.data(forKey: AppSettings.storageKey) == nil {
             settings.apply(remote)
         }
-        Task.detached(priority: .utility) { await TwoPhaseTables.prepare() }
+        Task { await TwoPhaseTables.prepare() }
     }
 
     func becameActive() {
@@ -80,23 +83,36 @@ final class AppModel {
 
     // MARK: Toasts
 
+    /// Queues a banner; banners are shown one after another.
     func show(_ toast: Toast) {
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { self.toast = toast }
+        queuedToasts.append(toast)
+        if toastTask == nil { showNextToast() }
+    }
+
+    private func showNextToast() {
+        guard !queuedToasts.isEmpty else { return }
+        let next = queuedToasts.removeFirst()
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { toast = next }
         toastTask?.cancel()
         toastTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(3.2))
-            guard !Task.isCancelled else { return }
-            withAnimation(.easeInOut(duration: 0.3)) { self?.toast = nil }
+            guard !Task.isCancelled, let self else { return }
+            withAnimation(.easeInOut(duration: 0.3)) { self.toast = nil }
+            try? await Task.sleep(for: .seconds(0.4))
+            self.toastTask = nil
+            self.showNextToast()
         }
     }
 
-    /// Celebrates newly unlocked achievements, one banner at a time.
+    /// Celebrates newly unlocked achievements, one banner each.
     func announce(_ achievements: [Achievement]) {
-        guard let first = achievements.first else { return }
+        guard !achievements.isEmpty else { return }
         play(.achievement)
-        show(Toast(title: t("achievements.unlocked"),
-                   message: t("achievement.\(first.rawValue).title"),
-                   systemImage: first.systemImage))
+        for achievement in achievements {
+            show(Toast(title: t("achievements.unlocked"),
+                       message: t("achievement.\(achievement.rawValue).title"),
+                       systemImage: achievement.systemImage))
+        }
     }
 }
 

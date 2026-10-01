@@ -83,11 +83,6 @@ final class ProgressStore {
         persist()
     }
 
-    func reset() {
-        load(Snapshot())
-        persist()
-    }
-
     /// Clears solve-related progress only (used by "reset statistics").
     func resetStatistics() {
         dailyTimes = [:]
@@ -112,11 +107,6 @@ final class ProgressStore {
         if beginner.allSatisfy(completedLessons.contains) { unlocked += unlock(.graduate, on: date) }
         persist()
         return unlocked
-    }
-
-    func uncompleteLesson(_ lesson: LessonID) {
-        completedLessons.remove(lesson)
-        persist()
     }
 
     /// Records a finished solve; returns achievements unlocked by it.

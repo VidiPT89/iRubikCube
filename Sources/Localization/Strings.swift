@@ -31,10 +31,6 @@ enum Strings {
         "common.close": ("Fechar", "Close"),
         "common.cancel": ("Cancelar", "Cancel"),
         "common.done": ("Concluído", "Done"),
-        "common.continue": ("Continuar", "Continue"),
-        "common.back": ("Voltar", "Back"),
-        "common.next": ("Seguinte", "Next"),
-        "common.reset": ("Repor", "Reset"),
         "common.undo": ("Desfazer", "Undo"),
         "common.redo": ("Refazer", "Redo"),
         "common.delete": ("Apagar", "Delete"),
@@ -42,7 +38,6 @@ enum Strings {
         "common.movesCount": ("%d movimentos", "%d moves"),
         "common.time": ("Tempo", "Time"),
         "common.none": ("–", "–"),
-        "common.size": ("%d×%d", "%d×%d"),
     ]
 
     static let splash: [String: Pair] = [
@@ -51,7 +46,5 @@ enum Strings {
         "about.body": ("O Cubo de Rubik clássico em 3D para iPhone e iPad: joga contra o relógio, pede ajuda quando precisares e aprende a resolvê-lo passo a passo.",
                        "The classic Rubik's Cube in 3D for iPhone and iPad: race the clock, ask for help whenever you need it and learn to solve it step by step."),
         "about.version": ("Versão %@", "Version %@"),
-        "about.website": ("Website", "Website"),
-        "about.github": ("GitHub", "GitHub"),
     ]
 }

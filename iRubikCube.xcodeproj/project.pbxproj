@@ -36,6 +36,7 @@
 		65BF62C84EBBE073E98DB502 /* CubeCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 70651266590D53475290F8F7 /* CubeCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		690E66A03E7F3EC35D4B4804 /* Notation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F4BB83CEB520075851DA3D /* Notation.swift */; };
 		6C71284DDAD7AFF07360A0E0 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD3343F744BAF44E4B80FC /* ProgressStore.swift */; };
+		6CC8EB3537E0E78FDCD22BAE /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 804C177F71A267BC0DC96933 /* InfoPlist.strings */; };
 		6D37A59E725284860724C48A /* Strings+Learn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74ADAC18120AF850D3408221 /* Strings+Learn.swift */; };
 		74798A9D068FE55086809BAF /* TwoPhaseSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A279C9D11088F35414426A /* TwoPhaseSolver.swift */; };
 		766831E9E3185AF6E8CD45D0 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97D4716D89C41EC5AB56442 /* CloudSync.swift */; };
@@ -133,6 +134,7 @@
 		15BBC096A5CD653539C220F0 /* MoveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveTests.swift; sourceTree = "<group>"; };
 		1A65F13E278733BE4391BD44 /* SoundEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundEngine.swift; sourceTree = "<group>"; };
 		2111891426E485341EC871A5 /* SolveRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolveRecord.swift; sourceTree = "<group>"; };
+		22DBFF9051E49D5AA723E54A /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		24F0752E442D52D137681C3F /* LessonModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonModel.swift; sourceTree = "<group>"; };
 		26D7B1E467219B2F14D1B2EE /* CubeCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CubeCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2E6D39BFB88D58CAD61AD663 /* ScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 		86FCE3835E7978DDA0388875 /* SolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolverTests.swift; sourceTree = "<group>"; };
 		8EB08389FBEC00727802A40C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		91DA9CEA7ABF4637C2F91BEF /* CubeScene+Build.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CubeScene+Build.swift"; sourceTree = "<group>"; };
+		9226BD27B9C2C7E8A96653F6 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		981360188A8B4806C885E536 /* iRubikCubeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iRubikCubeApp.swift; sourceTree = "<group>"; };
 		9BC12F687CE4FDF064EE5037 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A1A279C9D11088F35414426A /* TwoPhaseSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoPhaseSolver.swift; sourceTree = "<group>"; };
@@ -358,6 +361,7 @@
 			isa = PBXGroup;
 			children = (
 				8EB08389FBEC00727802A40C /* Assets.xcassets */,
+				804C177F71A267BC0DC96933 /* InfoPlist.strings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -581,6 +585,7 @@
 			knownRegions = (
 				Base,
 				en,
+				"pt-PT",
 			);
 			mainGroup = 2BB0460B2EF67869B2A96C5A;
 			minimizedProjectReferenceProxies = 1;
@@ -603,6 +608,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				20F38F3F09463B437E235680 /* Assets.xcassets in Resources */,
+				6CC8EB3537E0E78FDCD22BAE /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,6 +723,18 @@
 			targetProxy = 854781A48CAFEAFC2724F8A0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		804C177F71A267BC0DC96933 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9226BD27B9C2C7E8A96653F6 /* en */,
+				22DBFF9051E49D5AA723E54A /* pt-PT */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		0A43A824C58ED3E3802DEFCC /* Debug */ = {

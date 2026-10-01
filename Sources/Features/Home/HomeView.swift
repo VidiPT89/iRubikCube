@@ -141,7 +141,7 @@ final class HeroCube {
         if session == nil {
             let session = CubeSession(size: 3, model: nil)
             session.scene.interaction = .orbitOnly
-            session.scene.autoRotate = true
+            session.scene.autoRotate = !UIAccessibility.isReduceMotionEnabled
             session.scene.turnDuration = 0.45
             self.session = session
         }
@@ -149,7 +149,7 @@ final class HeroCube {
         task?.cancel()
         task = Task { @MainActor [weak self] in
             var pending: [Turn] = []
-            while !Task.isCancelled {
+            while !Task.isCancelled, !UIAccessibility.isReduceMotionEnabled {
                 try? await Task.sleep(for: .seconds(2.4))
                 guard let session = self?.session, !Task.isCancelled else { return }
                 if pending.count >= 3 || (!pending.isEmpty && Bool.random()) {

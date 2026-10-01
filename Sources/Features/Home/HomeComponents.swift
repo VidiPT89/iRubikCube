@@ -12,8 +12,6 @@ struct ModeCard: View {
     var progress: Double?
     let action: () -> Void
 
-    @State private var shimmer = false
-
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {

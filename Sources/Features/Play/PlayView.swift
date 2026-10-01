@@ -65,7 +65,18 @@ struct PlayView: View {
                 SizePicker(size: Binding(get: { model.size }, set: { model.changeSize($0) }))
                     .disabled(model.phase == .solving || model.phase == .scrambling)
             }
-            TimerDisplay(model: model)
+            HStack(spacing: 12) {
+                CircleIconButton(systemImage: "arrow.counterclockwise", label: app.t("play.restart"),
+                                 isEnabled: !model.scramble.isEmpty && model.phase != .scrambling) {
+                    model.restart()
+                }
+                TimerDisplay(model: model).frame(maxWidth: .infinity)
+                CircleIconButton(systemImage: model.phase == .paused ? "play.fill" : "pause.fill",
+                                 label: model.phase == .paused ? app.t("play.resume") : app.t("play.pause"),
+                                 isEnabled: model.phase == .solving || model.phase == .paused) {
+                    model.togglePause()
+                }
+            }
             ScrambleCard(scramble: model.scramble, size: model.size, placeholder: app.t("play.noScramble"))
         }
     }
@@ -131,11 +142,7 @@ struct PlayView: View {
             }
             .disabled(model.phase == .scrambling)
             Spacer(minLength: 0)
-            CircleIconButton(systemImage: model.phase == .paused ? "play.fill" : "pause.fill",
-                             label: model.phase == .paused ? app.t("play.resume") : app.t("play.pause"),
-                             isEnabled: model.phase == .solving || model.phase == .paused) {
-                model.togglePause()
-            }
+            Color.clear.frame(width: 46, height: 1)
             CircleIconButton(systemImage: showPad ? "keyboard.chevron.compact.down" : "keyboard",
                              label: app.t("play.togglePad"), prominent: showPad) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { showPad.toggle() }
