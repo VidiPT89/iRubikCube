@@ -44,6 +44,7 @@ struct GlassCard<Content: View>: View {
 /// Main call to action, filled with the brand gradient.
 struct PrimaryButton: View {
     @Environment(\.palette) private var palette
+    @Environment(\.isEnabled) private var isEnabled
     let title: String
     var systemImage: String?
     var action: () -> Void
@@ -58,7 +59,9 @@ struct PrimaryButton: View {
             .padding(.horizontal, 20)
             .frame(minHeight: 48)
             .background(palette.brandGradient, in: Capsule())
-            .shadow(color: palette.primary.opacity(0.35), radius: 14, y: 6)
+            .shadow(color: palette.primary.opacity(isEnabled ? 0.35 : 0), radius: 14, y: 6)
+            .saturation(isEnabled ? 1 : 0.2)
+            .opacity(isEnabled ? 1 : 0.45)
         }
         .buttonStyle(.pressable)
     }
@@ -127,11 +130,10 @@ struct Chip: View {
     @Environment(\.palette) private var palette
     let text: String
     var highlighted = false
-    var monospaced = true
 
     var body: some View {
         Text(text)
-            .font(monospaced ? .mono(14, .bold) : .rounded(13, .semibold))
+            .font(.mono(14, .bold))
             .foregroundStyle(highlighted ? Color(hex: 0x0A0A0F) : palette.text)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)

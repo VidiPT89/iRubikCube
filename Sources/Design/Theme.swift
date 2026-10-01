@@ -9,6 +9,8 @@ struct Palette: Sendable {
     let surfaceRaised: Color
     let stroke: Color
     let primary: Color
+    /// Middle stop of the brand gradient (fills, never small text).
+    let brandMid: Color
     let amber: Color
     let deep: Color
     let hot: Color
@@ -26,6 +28,7 @@ struct Palette: Sendable {
         surfaceRaised: Color(hex: 0x1D1D25),
         stroke: Color.white.opacity(0.08),
         primary: Color(hex: 0xF99C00),
+        brandMid: Color(hex: 0xF99C00),
         amber: Color(hex: 0xFCBB00),
         deep: Color(hex: 0xDD7400),
         hot: Color(hex: 0xFE6E00),
@@ -43,13 +46,15 @@ struct Palette: Sendable {
         surface: Color(hex: 0xFFFFFF),
         surfaceRaised: Color(hex: 0xF5EDE1),
         stroke: Color.black.opacity(0.07),
-        primary: Color(hex: 0xC76400),
-        amber: Color(hex: 0xE89A00),
-        deep: Color(hex: 0xA85200),
+        // Darker than the brand amber so text in it passes WCAG AA on the warm white.
+        primary: Color(hex: 0xAD5600),
+        brandMid: Color(hex: 0xF28A00),
+        amber: Color(hex: 0xF5A800),
+        deep: Color(hex: 0x8F4500),
         hot: Color(hex: 0xE25F00),
         text: Color(hex: 0x17140F),
         textDim: Color(hex: 0x645B51),
-        textFaint: Color(hex: 0xA79D90),
+        textFaint: Color(hex: 0x8A8073),
         success: Color(hex: 0x1C8F55),
         danger: Color(hex: 0xC8372A),
         isDark: false
@@ -59,7 +64,7 @@ struct Palette: Sendable {
 
     /// The signature gradient: burnt yellow into amber into deep orange.
     var brandGradient: LinearGradient {
-        LinearGradient(colors: [amber, primary, hot], startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(colors: [amber, brandMid, hot], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     var textGradient: LinearGradient {
@@ -92,13 +97,34 @@ extension EnvironmentValues {
 
 extension Font {
     /// SF Pro Rounded, for titles and numbers that should feel friendly.
+    /// Sizes map onto the nearest text style, so everything follows Dynamic Type.
     static func rounded(_ size: CGFloat, _ weight: Font.Weight = .bold) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        scaled(size, weight: weight, design: .rounded)
     }
 
     /// SF Mono, for times and notation.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        scaled(size, weight: weight, design: .monospaced)
+    }
+
+    /// Text style whose default size is closest to `size`. Very large display
+    /// sizes (the timer) stay fixed so they never push the cube off screen.
+    static func scaled(_ size: CGFloat, weight: Font.Weight, design: Font.Design) -> Font {
+        let style: Font.TextStyle
+        switch size {
+        case ..<11.5: style = .caption2
+        case ..<12.5: style = .caption
+        case ..<13.5: style = .footnote
+        case ..<15.5: style = .subheadline
+        case ..<16.5: style = .callout
+        case ..<18.5: style = .body
+        case ..<21: style = .title3
+        case ..<25: style = .title2
+        case ..<31: style = .title
+        case ..<40: style = .largeTitle
+        default: return .system(size: size, weight: weight, design: design)
+        }
+        return .system(style, design: design, weight: weight)
     }
 }
 

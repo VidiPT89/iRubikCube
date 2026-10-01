@@ -52,7 +52,7 @@ enum CubeScheme: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    enum Glyph: Sendable {
+    enum Glyph: Hashable, Sendable {
         case none, circle, plus, bar, diamond, square
 
         var systemImage: String? {
@@ -82,7 +82,6 @@ struct StickerSwatch: View {
     let color: CubeColor
     let scheme: CubeScheme
     var size: CGFloat = 28
-    var dimmed = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: size * 0.2, style: .continuous)
@@ -99,6 +98,5 @@ struct StickerSwatch: View {
                     .strokeBorder(.black.opacity(0.25), lineWidth: 1)
             )
             .frame(width: size, height: size)
-            .opacity(dimmed ? 0.25 : 1)
     }
 }
