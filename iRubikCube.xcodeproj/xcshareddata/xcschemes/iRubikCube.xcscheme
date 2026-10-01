@@ -74,9 +74,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B70FAC4149773EAB4B6B51A3"
-            BuildableName = "CubeCore.framework"
-            BlueprintName = "CubeCore"
+            BlueprintIdentifier = "3C065AADA12C25539E778ECD"
+            BuildableName = "iRubikCube.app"
+            BlueprintName = "iRubikCube"
             ReferencedContainer = "container:iRubikCube.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -117,15 +117,16 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B70FAC4149773EAB4B6B51A3"
-            BuildableName = "CubeCore.framework"
-            BlueprintName = "CubeCore"
+            BlueprintIdentifier = "3C065AADA12C25539E778ECD"
+            BuildableName = "iRubikCube.app"
+            BlueprintName = "iRubikCube"
             ReferencedContainer = "container:iRubikCube.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
       <CommandLineArguments>
       </CommandLineArguments>
    </LaunchAction>
@@ -135,15 +136,18 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B70FAC4149773EAB4B6B51A3"
-            BuildableName = "CubeCore.framework"
-            BlueprintName = "CubeCore"
+            BlueprintIdentifier = "3C065AADA12C25539E778ECD"
+            BuildableName = "iRubikCube.app"
+            BlueprintName = "iRubikCube"
             ReferencedContainer = "container:iRubikCube.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

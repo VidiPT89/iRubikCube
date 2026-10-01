@@ -114,6 +114,10 @@ schemes:
         iRubikCubeTests: [test]
     run:
       config: Debug
+      # Without this XcodeGen launches the first target alphabetically (CubeCore).
+      executable: iRubikCube
+    profile:
+      executable: iRubikCube
     test:
       config: Debug
       targets:
