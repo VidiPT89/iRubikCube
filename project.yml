@@ -119,12 +119,3 @@ schemes:
       targets:
         - CubeCoreTests
         - iRubikCubeTests
-  CubeCore:
-    build:
-      targets:
-        CubeCore: all
-        CubeCoreTests: [test]
-    test:
-      config: Debug
-      targets:
-        - CubeCoreTests
