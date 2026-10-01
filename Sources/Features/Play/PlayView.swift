@@ -19,22 +19,21 @@ struct PlayView: View {
             ZStack {
                 Backdrop(glow: model.phase == .solved ? 1.6 : 1)
                     .animation(.easeInOut(duration: 0.8), value: model.phase)
-                if wide {
-                    HStack(spacing: 20) {
-                        cubeArea
+                // One layout that changes axis keeps the same RealityView alive; two
+                // branches would build a second one, which stays blank (only one renders).
+                let layout = wide ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
+                layout {
+                    if !wide { header.frame(maxWidth: 680) }
+                    cubeArea
+                    if wide {
                         ScrollView { panel.padding(.vertical, 16) }
                             .frame(width: min(420, geometry.size.width * 0.4))
-                    }
-                    .padding(.horizontal, 20)
-                } else {
-                    VStack(spacing: 12) {
-                        header.frame(maxWidth: 680)
-                        cubeArea
+                    } else {
                         bottomPanel.frame(maxWidth: 680)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
                 }
+                .padding(.horizontal, wide ? 20 : 16)
+                .padding(.bottom, wide ? 0 : 8)
                 ConfettiView(trigger: model.confetti).ignoresSafeArea()
             }
         }

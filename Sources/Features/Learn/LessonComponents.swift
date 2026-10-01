@@ -174,3 +174,67 @@ struct NotationQuizView: View {
         return palette.surfaceRaised
     }
 }
+
+/// Sits on the cube while an algorithm is demonstrated: every move as a
+/// chip, the current one highlighted and explained, with step controls.
+struct AlgorithmPlayer: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.palette) private var palette
+    let model: LessonModel
+    let demo: AlgorithmDemo
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(app.t("algorithm.\(demo.algorithm.id)")).font(.rounded(14, .bold)).foregroundStyle(palette.text)
+                Spacer()
+                Text("\(demo.index)/\(demo.turns.count)").font(.mono(13, .bold)).foregroundStyle(palette.textDim)
+                Button { model.closeDemo() } label: {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 20)).foregroundStyle(palette.textDim)
+                }
+                .accessibilityLabel(Text(app.t("common.close")))
+            }
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(Array(demo.tokens.enumerated()), id: \.offset) { index, token in
+                            Chip(text: token, highlighted: index == demo.index - 1)
+                                .opacity(index < demo.index ? 1 : 0.5)
+                                .scaleEffect(index == demo.index - 1 ? 1.12 : 1)
+                                .id(index)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .animation(.spring(response: 0.3), value: demo.index)
+                }
+                .onChange(of: demo.index) { _, index in
+                    withAnimation { proxy.scrollTo(max(0, index - 1), anchor: .center) }
+                }
+            }
+            Text(caption)
+                .font(.rounded(13, .semibold))
+                .foregroundStyle(palette.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .lineLimit(2)
+                .contentTransition(.opacity)
+            HStack(spacing: 14) {
+                CircleIconButton(systemImage: "backward.end.fill", label: app.t("assist.stepBack"),
+                                 isEnabled: demo.index > 0) { model.stepDemo(forward: false) }
+                CircleIconButton(systemImage: demo.isFinished ? "arrow.counterclockwise" : (demo.isPlaying ? "pause.fill" : "play.fill"),
+                                 label: demo.isFinished ? app.t("lesson.replay") : (demo.isPlaying ? app.t("play.pause") : app.t("assist.play")),
+                                 prominent: true) { model.toggleDemo() }
+                CircleIconButton(systemImage: "forward.end.fill", label: app.t("assist.stepForward"),
+                                 isEnabled: !demo.isFinished) { model.stepDemo(forward: true) }
+            }
+        }
+        .padding(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(palette.primary.opacity(0.35)))
+    }
+
+    private var caption: String {
+        if demo.isFinished { return app.t("lesson.demoDone") }
+        guard let token = demo.currentToken else { return app.t("lesson.demoStart") }
+        return "\(token): " + NotationSpeech.describe(token, model: app)
+    }
+}

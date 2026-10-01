@@ -17,24 +17,22 @@ struct LessonView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let wide = geometry.size.width > geometry.size.height && geometry.size.width > 700
+            // On iPad the cube sits beside the explanation in either orientation.
+            let wide = geometry.size.width > 600
             ZStack {
                 Backdrop()
-                if wide {
-                    HStack(spacing: 20) {
-                        cube
-                        VStack(spacing: 12) { tabPicker; content }
-                            .frame(width: min(440, geometry.size.width * 0.44))
-                    }
-                    .padding(.horizontal, 20)
-                } else {
+                // One layout that changes axis keeps the same RealityView alive; two
+                // branches would build a second one, which stays blank (only one renders).
+                let layout = wide ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
+                layout {
                     VStack(spacing: 12) {
-                        cube.frame(height: geometry.size.height * 0.42)
-                        tabPicker
-                        content
+                        cube.frame(height: wide ? nil : geometry.size.height * (model.demo == nil ? 0.42 : 0.36))
+                        player
                     }
-                    .padding(.horizontal, 16)
+                    VStack(spacing: 12) { tabPicker; content }
+                        .frame(width: wide ? min(460, geometry.size.width * 0.46) : nil)
                 }
+                .padding(.horizontal, wide ? 20 : 16)
                 ConfettiView(trigger: model.confetti).ignoresSafeArea()
             }
         }
@@ -49,6 +47,8 @@ struct LessonView: View {
             }
         }
         .onAppear { model.session.applySettings() }
+        .onDisappear { model.closeDemo() }
+        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: model.demo?.algorithm.id)
     }
 
     private var cube: some View {
@@ -72,9 +72,18 @@ struct LessonView: View {
             }
         }
         .animation(.spring(response: 0.35), value: model.demoToken)
+
         .onChange(of: model.correctMoves) { _, _ in
             glow = 1
             withAnimation(.easeOut(duration: 0.9)) { glow = 0 }
+        }
+    }
+
+    @ViewBuilder
+    private var player: some View {
+        if let demo = model.demo {
+            AlgorithmPlayer(model: model, demo: demo)
+                .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
 
@@ -155,7 +164,7 @@ struct LessonView: View {
                 NotationGrid(model: model)
             }
             ForEach(model.lesson.algorithms) { algorithm in
-                AlgorithmCard(algorithm: algorithm, isPlaying: model.playingAlgorithm == algorithm.id) {
+                AlgorithmCard(algorithm: algorithm, isPlaying: model.demo?.algorithm.id == algorithm.id) {
                     model.watch(algorithm)
                 }
             }

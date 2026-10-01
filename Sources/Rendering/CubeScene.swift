@@ -64,6 +64,8 @@ final class CubeScene {
     var viewSize: CGSize = CGSize(width: 390, height: 500) { didSet { updateCamera() } }
     static let defaultYaw: Float = -0.62
     static let defaultPitch: Float = 0.5
+    /// Resting tilt: positive looks from above, negative from below.
+    @ObservationIgnored var basePitch: Float = CubeScene.defaultPitch
     @ObservationIgnored var yaw: Float = CubeScene.defaultYaw
     @ObservationIgnored var pitch: Float = CubeScene.defaultPitch
     @ObservationIgnored var zoom: Float = 1
@@ -183,7 +185,7 @@ final class CubeScene {
             viewReset = ((yaw, pitch, zoom), 0)
         } else {
             yaw = Self.defaultYaw
-            pitch = Self.defaultPitch
+            pitch = basePitch
             zoom = 1
             applyOrbit()
             updateCamera()
@@ -239,7 +241,7 @@ final class CubeScene {
             reset.progress = min(1, reset.progress + dt / 0.55)
             let k = Float(Self.easeInOut(Double(reset.progress)))
             yaw = reset.from.0 + (Self.defaultYaw - reset.from.0) * k
-            pitch = reset.from.1 + (Self.defaultPitch - reset.from.1) * k
+            pitch = reset.from.1 + (basePitch - reset.from.1) * k
             zoom = reset.from.2 + (1 - reset.from.2) * k
             viewReset = reset.progress >= 1 ? nil : reset
             updateCamera()

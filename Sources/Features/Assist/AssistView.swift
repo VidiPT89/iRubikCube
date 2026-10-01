@@ -19,22 +19,21 @@ struct AssistView: View {
             let wide = geometry.size.width > geometry.size.height && geometry.size.width > 700
             ZStack {
                 Backdrop()
-                if wide {
-                    HStack(spacing: 20) {
-                        cube
-                        ScrollView { VStack(spacing: 14) { topBar; helpPanel } .padding(.vertical, 16) }
+                // One layout that changes axis keeps the same RealityView alive; two
+                // branches would build a second one, which stays blank (only one renders).
+                let layout = wide ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
+                layout {
+                    if !wide { topBar.frame(maxWidth: 680) }
+                    cube
+                    if wide {
+                        ScrollView { VStack(spacing: 14) { topBar; helpPanel }.padding(.vertical, 16) }
                             .frame(width: min(430, geometry.size.width * 0.42))
-                    }
-                    .padding(.horizontal, 20)
-                } else {
-                    VStack(spacing: 12) {
-                        topBar.frame(maxWidth: 680)
-                        cube
+                    } else {
                         helpPanel.frame(maxWidth: 680)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
                 }
+                .padding(.horizontal, wide ? 20 : 16)
+                .padding(.bottom, wide ? 0 : 8)
                 ConfettiView(trigger: model.confetti).ignoresSafeArea()
             }
         }

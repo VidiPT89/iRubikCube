@@ -10,12 +10,22 @@ struct HomeView: View {
     @State private var hero = HeroCube()
     @State private var showSettings = false
     @State private var appeared = false
+    /// Off for one frame when the layout flips, so the old RealityView is gone
+    /// before the new one is built (only one renders at a time).
+    @State private var heroReady = true
 
     var body: some View {
         GeometryReader { geometry in
             let wide = geometry.size.width > geometry.size.height && geometry.size.width > 700
             ZStack {
                 Backdrop(glow: 1.2)
+                    .onChange(of: wide) { _, _ in
+                        heroReady = false
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(80))
+                            heroReady = true
+                        }
+                    }
                 if wide {
                     HStack(spacing: 24) {
                         VStack(spacing: 8) {
@@ -85,7 +95,7 @@ struct HomeView: View {
                 .allowsHitTesting(false)
             // Only one RealityView renders at a time, so the hero steps aside
             // while another screen with a cube is on top.
-            if let session = hero.session, path.isEmpty {
+            if let session = hero.session, path.isEmpty, heroReady {
                 CubeView(scene: session.scene, accessibilityLabel: app.t("a11y.heroCube"))
             }
         }

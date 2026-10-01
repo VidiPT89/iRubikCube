@@ -44,7 +44,9 @@ final class LessonModel {
     private(set) var correctMoves = 0
     private(set) var anatomy: Anatomy = .centers
     private(set) var demoToken: String?
-    private(set) var playingAlgorithm: String?
+    /// Algorithm being shown move by move, if any.
+    private(set) var demo: AlgorithmDemo?
+    @ObservationIgnored private var demoTask: Task<Void, Never>?
     var quiz: Quiz?
 
     @ObservationIgnored private weak var app: AppModel?
@@ -53,6 +55,11 @@ final class LessonModel {
         self.lesson = lesson
         self.app = app
         session = CubeSession(size: 3, state: Self.demoState(for: lesson), model: app)
+        // First-layer lessons work on the white face at the bottom: look from below.
+        if [.whiteCross, .whiteCorners, .f2l].contains(lesson) {
+            session.scene.basePitch = -0.45
+            session.scene.resetView(animated: false)
+        }
         session.onMove = { [weak self] turn, source in self?.moved(turn, source: source) }
         showDemo()
     }
@@ -69,6 +76,8 @@ final class LessonModel {
 
     private func tabChanged() {
         feedback = .none
+        demoTask?.cancel()
+        demo = nil
         switch tab {
         case .why, .how:
             practising = false
@@ -82,7 +91,6 @@ final class LessonModel {
         session.load(Self.demoState(for: lesson))
         session.scene.interaction = .orbitOnly
         session.scene.highlighted = highlight(for: lesson)
-        playingAlgorithm = nil
     }
 
     func selectAnatomy(_ part: Anatomy) {
@@ -103,19 +111,69 @@ final class LessonModel {
     }
 
     /// Shows the case an algorithm solves, then solves it slowly.
+    /// Shows the case an algorithm solves, then plays it one move at a
+    /// time, highlighting each move, so it can be followed on the cube.
     func watch(_ algorithm: Algorithm) {
+        demoTask?.cancel()
         let start = Self.demoState(for: lesson).applying(LessonCoach.inverse(of: algorithm.turns))
         session.load(start)
         session.scene.highlighted = nil
-        playingAlgorithm = algorithm.id
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(0.7))
-            guard let self, self.playingAlgorithm == algorithm.id else { return }
-            self.session.scene.turnDuration = 0.6
-            self.session.perform(algorithm.turns, source: .program)
-            self.session.scene.whenIdle { [weak self] in
-                self?.session.applySettings()
-                self?.playingAlgorithm = nil
+        demo = AlgorithmDemo(algorithm: algorithm, start: start)
+        runDemo(after: 0.8)
+    }
+
+    func toggleDemo() {
+        guard var current = demo else { return }
+        if current.isFinished {
+            watch(current.algorithm)
+            return
+        }
+        current.isPlaying.toggle()
+        demo = current
+        if current.isPlaying { runDemo(after: 0) } else { demoTask?.cancel() }
+    }
+
+    func stepDemo(forward: Bool) {
+        guard var current = demo else { return }
+        demoTask?.cancel()
+        current.isPlaying = false
+        if forward, !current.isFinished {
+            let turn = current.turns[current.index]
+            current.index += 1
+            demo = current
+            playDemoTurn(turn)
+        } else if !forward, current.index > 0 {
+            current.index -= 1
+            demo = current
+            playDemoTurn(current.turns[current.index].inverse)
+        }
+    }
+
+    func closeDemo() {
+        demoTask?.cancel()
+        demo = nil
+        showDemo()
+    }
+
+    private func playDemoTurn(_ turn: Turn) {
+        session.scene.finishAnimations()
+        session.scene.turnDuration = 0.55
+        session.perform(turn, source: .program)
+        session.scene.whenIdle { [weak self] in self?.session.applySettings() }
+    }
+
+    private func runDemo(after delay: Double) {
+        demoTask?.cancel()
+        demoTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            while let self, !Task.isCancelled, var current = self.demo, current.isPlaying, !current.isFinished {
+                let turn = current.turns[current.index]
+                current.index += 1
+                if current.isFinished { current.isPlaying = false }
+                self.demo = current
+                self.playDemoTurn(turn)
+                // Time for the turn plus a beat to see where the pieces went.
+                try? await Task.sleep(for: .seconds(1.15))
             }
         }
     }
@@ -302,4 +360,25 @@ final class LessonModel {
             }
         }
     }
+}
+
+/// Move-by-move playback of an algorithm in a lesson.
+struct AlgorithmDemo {
+    let algorithm: Algorithm
+    let start: CubeState
+    let turns: [Turn]
+    let tokens: [String]
+    var index = 0
+    var isPlaying = true
+
+    init(algorithm: Algorithm, start: CubeState) {
+        self.algorithm = algorithm
+        self.start = start
+        turns = algorithm.turns
+        tokens = algorithm.notation.split(separator: " ").map(String.init)
+    }
+
+    var isFinished: Bool { index >= turns.count }
+    /// The move just played (what the cube is showing now).
+    var currentToken: String? { index > 0 ? tokens[index - 1] : nil }
 }
