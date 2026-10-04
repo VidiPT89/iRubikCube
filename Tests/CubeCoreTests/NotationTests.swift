@@ -44,9 +44,20 @@ struct NotationTests {
         #expect(try Notation.parseToken("2R", size: 4) == Turn(axis: .x, layers: .single(2), quarters: -1))
     }
 
-    @Test("Rejects unknown tokens", arguments: ["Q", "R3", "RR", "w", "2x", "M4", ""])
+    @Test("Rejects unknown tokens", arguments: ["Q", "R3", "RR", "w", "2x", "M4", "", "ß", "ﬃ", "🙂"])
     func errors(token: String) {
         #expect(throws: Notation.ParseError.self) { try Notation.parseToken(token, size: 3) }
+    }
+
+    @Test("Rejects unsupported sizes before constructing layer ranges", arguments: [-1, 0, 1, 6, 100])
+    func invalidSize(size: Int) {
+        #expect(throws: Notation.ParseError.self) { try Notation.parseToken("x", size: size) }
+        #expect(throws: Notation.ParseError.self) { try Notation.parseToken("R", size: size) }
+    }
+
+    @Test("Accepts the prime symbol used in displayed notation")
+    func primeSymbol() throws {
+        #expect(try Notation.parseToken("R′", size: 3) == .face(.R, -1))
     }
 
     @Test("Rejects slices on a 2×2")

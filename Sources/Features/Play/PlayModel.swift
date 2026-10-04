@@ -34,7 +34,7 @@ final class PlayModel {
     private(set) var scramble: [Turn] = []
     private(set) var moves = 0
     private(set) var inspectionEnd: Date?
-    private(set) var timerStart: Date?
+    private var timerStart: ContinuousClock.Instant?
     private(set) var accumulated: TimeInterval = 0
     var result: Result?
     private(set) var confetti = 0
@@ -45,7 +45,8 @@ final class PlayModel {
     @ObservationIgnored var onSolved: ((Result, [Turn], [Turn]) -> Void)?
     @ObservationIgnored private weak var model: AppModel?
     @ObservationIgnored private var inspectionTask: Task<Void, Never>?
-    @ObservationIgnored private var solveTurns: [Turn] = []
+    @ObservationIgnored private var roundID = UUID()
+    @ObservationIgnored private var resultTask: Task<Void, Never>?
 
     init(model: AppModel, size: Int = 3, isDaily: Bool = false) {
         self.model = model
@@ -56,9 +57,10 @@ final class PlayModel {
 
     var size: Int { session.size }
 
-    func elapsed(at date: Date) -> TimeInterval {
+    func elapsed() -> TimeInterval {
         guard let timerStart else { return accumulated }
-        return accumulated + date.timeIntervalSince(timerStart)
+        let duration = timerStart.duration(to: .now).components
+        return accumulated + Double(duration.seconds) + Double(duration.attoseconds) / 1e18
     }
 
     var inspectionEnabled: Bool { model?.settings.inspection ?? false }
@@ -66,9 +68,8 @@ final class PlayModel {
     // MARK: Actions
 
     func changeSize(_ newSize: Int) {
-        guard newSize != size, !isDaily else { return }
+        guard [2, 3, 4].contains(newSize), newSize != size, !isDaily else { return }
         stopClock()
-        phase = .idle
         scramble = []
         session.load(CubeState(size: newSize))
         session.scene.resetView()
@@ -78,11 +79,9 @@ final class PlayModel {
         stopClock()
         let turns = isDaily ? Scrambler.daily(for: .now) : Scrambler.scramble(size: size)
         scramble = turns
-        moves = 0
-        solveTurns = []
-        result = nil
         session.load(CubeState(size: size))
         phase = .scrambling
+        session.scene.interaction = .orbitOnly
         model?.play(.whoosh)
         session.animateSetup(turns)
         session.scene.whenIdle { [weak self] in self?.scrambleFinished() }
@@ -91,6 +90,7 @@ final class PlayModel {
     private func scrambleFinished() {
         guard phase == .scrambling else { return }
         phase = .waiting
+        session.scene.interaction = .full
         guard inspectionEnabled else { return }
         let end = Date.now.addingTimeInterval(15)
         inspectionEnd = end
@@ -105,9 +105,6 @@ final class PlayModel {
     func restart() {
         guard !scramble.isEmpty else { return }
         stopClock()
-        moves = 0
-        solveTurns = []
-        result = nil
         session.load(CubeState(size: size).applying(scramble))
         phase = .scrambling
         scrambleFinished()
@@ -116,7 +113,9 @@ final class PlayModel {
     func togglePause() {
         switch phase {
         case .solving:
-            accumulated = elapsed(at: .now)
+            session.scene.finishDragImmediately()
+            guard phase == .solving else { return }
+            accumulated = elapsed()
             timerStart = nil
             phase = .paused
             session.scene.interaction = .none
@@ -146,24 +145,18 @@ final class PlayModel {
         switch phase {
         case .waiting where !isRotation && source != .program:
             startClock()
-            count(turn, source: source)
+            count()
+            if session.state.isSolved { finish() }
         case .solving:
-            count(turn, source: source)
+            count()
             if session.state.isSolved { finish() }
         default:
             break
         }
     }
 
-    private func count(_ turn: Turn, source: CubeSession.Source) {
-        guard !turn.isWholeCube(size: size) else { return }
-        if source == .undo {
-            moves = max(0, moves - 1)
-            _ = solveTurns.popLast()
-        } else {
-            moves += 1
-            solveTurns.append(turn)
-        }
+    private func count() {
+        moves = session.history.filter { !$0.isWholeCube(size: size) }.count
     }
 
     private func startClock() {
@@ -175,6 +168,11 @@ final class PlayModel {
     }
 
     private func stopClock() {
+        roundID = UUID()
+        resultTask?.cancel()
+        result = nil
+        phase = .idle
+        moves = 0
         inspectionTask?.cancel()
         inspectionEnd = nil
         timerStart = nil
@@ -183,21 +181,23 @@ final class PlayModel {
     }
 
     private func finish() {
-        let time = elapsed(at: .now)
+        let time = elapsed()
         timerStart = nil
         accumulated = time
         phase = .solved
         let outcome = Result(time: time, moves: moves, previousBest: bestTime?(size), size: size, isDaily: isDaily)
-        onSolved?(outcome, scramble, solveTurns)
+        onSolved?(outcome, scramble, session.history)
+        let id = roundID
         session.scene.whenIdle { [weak self] in
-            guard let self else { return }
+            guard let self, self.roundID == id, self.phase == .solved else { return }
             self.session.scene.celebrate()
             self.confetti += 1
             self.model?.play(.solved)
             self.model?.feel(.solved)
-            Task { @MainActor [weak self] in
+            self.resultTask = Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(1.4))
-                self?.result = outcome
+                guard !Task.isCancelled, let self, self.roundID == id, self.phase == .solved else { return }
+                self.result = outcome
             }
         }
     }

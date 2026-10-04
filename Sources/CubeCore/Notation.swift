@@ -27,7 +27,9 @@ public enum Notation {
     }
 
     public static func parseToken(_ raw: String, size: Int) throws -> Turn {
-        var token = Substring(raw.replacingOccurrences(of: "’", with: "'"))
+        guard CubeState.supportedSizes.contains(size) else { throw ParseError.unsupportedForSize(raw, size) }
+        var token = Substring(raw.replacingOccurrences(of: "’", with: "'")
+            .replacingOccurrences(of: "′", with: "'"))
         guard !token.isEmpty else { throw ParseError.unknownToken(raw) }
 
         var amount = 1
@@ -62,7 +64,8 @@ public enum Notation {
         if let face = Face(letter: letter) {
             return try faceTurn(face, depth: depth, wide: wide, amount: amount, size: size, raw: raw)
         }
-        if let face = Face(letter: Character(letter.uppercased())), letter.isLowercase {
+        let uppercase = letter.uppercased()
+        if letter.isLowercase, uppercase.count == 1, let upper = uppercase.first, let face = Face(letter: upper) {
             guard depth == 1 else { throw ParseError.unknownToken(raw) }
             return try faceTurn(face, depth: 2, wide: true, amount: amount, size: size, raw: raw)
         }

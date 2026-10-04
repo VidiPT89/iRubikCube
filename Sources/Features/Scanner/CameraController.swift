@@ -20,8 +20,22 @@ final class CameraController {
     @ObservationIgnored private let sampler = FrameSampler()
     @ObservationIgnored private let queue = DispatchQueue(label: "dev.ividi.irubikcube.camera")
 
+    @ObservationIgnored private var requestID = UUID()
+
+    init() {
+        sampler.onSamples = { [weak self] samples, locked in
+            Task { @MainActor in
+                guard let self, self.status == .running else { return }
+                self.samples = samples
+                self.locked = locked
+            }
+        }
+    }
+
     func start() async {
         guard status != .running else { return }
+        let id = UUID()
+        requestID = id
         guard AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) != nil else {
             status = .unavailable
             return
@@ -30,16 +44,14 @@ final class CameraController {
         if AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined {
             authorized = await AVCaptureDevice.requestAccess(for: .video)
         }
+        guard !Task.isCancelled, requestID == id else { return }
         guard authorized else {
             status = .denied
             return
         }
-        configure()
-        sampler.onSamples = { [weak self] samples, locked in
-            Task { @MainActor in
-                self?.samples = samples
-                self?.locked = locked
-            }
+        guard configure() else {
+            status = .unavailable
+            return
         }
         // AVCaptureSession is documented as safe to start from a background queue.
         nonisolated(unsafe) let session = self.session
@@ -48,26 +60,36 @@ final class CameraController {
     }
 
     func stop() {
+        requestID = UUID()
+        status = .unknown
+        samples = []
+        locked = false
         nonisolated(unsafe) let session = self.session
         queue.async { session.stopRunning() }
     }
 
-    private func configure() {
-        guard session.inputs.isEmpty,
-              let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let input = try? AVCaptureDeviceInput(device: device) else { return }
+    private func configure() -> Bool {
+        if !session.inputs.isEmpty { return !session.outputs.isEmpty }
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              let input = try? AVCaptureDeviceInput(device: device) else { return false }
         session.beginConfiguration()
+        defer { session.commitConfiguration() }
         session.sessionPreset = .hd1280x720
-        if session.canAddInput(input) { session.addInput(input) }
+        guard session.canAddInput(input) else { return false }
+        session.addInput(input)
         let output = AVCaptureVideoDataOutput()
         output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
         output.alwaysDiscardsLateVideoFrames = true
         output.setSampleBufferDelegate(sampler, queue: DispatchQueue(label: "dev.ividi.irubikcube.frames"))
-        if session.canAddOutput(output) { session.addOutput(output) }
+        guard session.canAddOutput(output) else {
+            session.removeInput(input)
+            return false
+        }
+        session.addOutput(output)
         if let connection = output.connection(with: .video), connection.isVideoRotationAngleSupported(90) {
             connection.videoRotationAngle = 90
         }
-        session.commitConfiguration()
+        return true
     }
 }
 

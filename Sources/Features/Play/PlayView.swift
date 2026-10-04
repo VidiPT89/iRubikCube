@@ -118,8 +118,10 @@ struct PlayView: View {
         VStack(alignment: .leading, spacing: 16) {
             header
             MoveHistoryStrip(turns: model.session.history, size: model.size, emptyText: app.t("play.historyEmpty"))
-            NotationPad(size: model.size, isEnabled: model.phase != .paused && model.phase != .scrambling) { turn in
-                model.session.perform(turn)
+            if showPad {
+                NotationPad(size: model.size, isEnabled: model.phase != .paused && model.phase != .scrambling) { turn in
+                    model.session.perform(turn)
+                }
             }
             controlBar
         }
@@ -152,8 +154,9 @@ struct PlayView: View {
     // MARK: Records
 
     private func bestTime(for size: Int) -> TimeInterval? {
-        let descriptor = FetchDescriptor<SolveRecord>(predicate: #Predicate { $0.size == size },
+        var descriptor = FetchDescriptor<SolveRecord>(predicate: #Predicate { $0.size == size },
                                                       sortBy: [SortDescriptor(\.duration)])
+        descriptor.fetchLimit = 1
         return (try? context.fetch(descriptor))?.first?.duration
     }
 

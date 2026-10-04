@@ -52,6 +52,8 @@ final class CubeSession {
 
     /// A move asked for by the player (buttons) or by the app (hints, playback).
     func perform(_ turn: Turn, source: Source = .user) {
+        guard turn.quarters != 0, source != .user || scene.interaction == .full else { return }
+        scene.finishDragImmediately()
         state.apply(turn)
         scene.enqueue(turn)
         record(turn, source: source)
@@ -82,12 +84,14 @@ final class CubeSession {
     }
 
     func undo() {
+        scene.finishDragImmediately()
         guard let last = history.popLast() else { return }
         future.append(last)
         perform(last.inverse, source: .undo)
     }
 
     func redo() {
+        scene.finishDragImmediately()
         guard let next = future.popLast() else { return }
         perform(next, source: .redo)
     }

@@ -12,14 +12,12 @@ enum Sound: CaseIterable, Sendable {
 /// the main thread or at launch.
 @MainActor
 final class SoundEngine {
-    var isEnabled = true
     private let core = SoundCore()
 
     func start() { core.run { $0.start() } }
     func stop() { core.run { $0.stop() } }
 
     func play(_ sound: Sound) {
-        guard isEnabled else { return }
         core.run { $0.play(sound) }
     }
 }
@@ -72,7 +70,7 @@ private final class SoundCore: @unchecked Sendable {
     }
 
     func start() {
-        guard !isRunning else { return }
+        guard !isRunning || engine?.isRunning != true else { return }
         let engine = prepare()
         // Ambient, so the app never silences the player's own music.
         let session = AVAudioSession.sharedInstance()
@@ -95,7 +93,7 @@ private final class SoundCore: @unchecked Sendable {
     }
 
     func play(_ sound: Sound) {
-        guard isRunning, let buffer = buffers[sound] else { return }
+        guard isRunning, engine?.isRunning == true, let buffer = buffers[sound] else { return }
         let now = CACurrentMediaTime()
         // Fast bursts of the same sound (scrambles) would only turn to mush.
         if let last = lastPlayed[sound], now - last < 0.035 { return }

@@ -36,13 +36,13 @@ struct ThemedModifier: ViewModifier {
         let scheme = model.settings.appearance.colorScheme
         let palette = Palette.resolve(scheme ?? systemScheme)
         content
+            .modifier(ToastHost())
             .environment(\.palette, palette)
             .environment(\.locale, model.language.locale)
             .preferredColorScheme(scheme)
             .tint(palette.primary)
             // Beyond this the cube screens have no room left for the cube itself.
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-            .modifier(ToastHost())
     }
 }
 

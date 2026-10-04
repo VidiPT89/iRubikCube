@@ -9,8 +9,8 @@ struct TimerDisplay: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: model.phase != .solving)) { timeline in
-                let time = model.elapsed(at: timeline.date)
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: model.phase != .solving)) { _ in
+                let time = model.elapsed()
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
                     Text(time.cubeTime)
                         .font(.mono(44, .bold))

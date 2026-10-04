@@ -105,6 +105,30 @@ xcodebuild -project iRubikCube.xcodeproj -scheme iRubikCube \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
+## Reliability and validation
+
+The timer uses a monotonic clock. Saved solutions retain whole-cube rotations
+(including inspection rotations), so the recorded sequence can reproduce the solve.
+Restarting a round or changing lessons cancels delayed results and quiz actions.
+
+The test suite covers cube moves, notation, validation, both solvers (including
+1,000 scrambled 3×3 solves), gestures, round lifecycle, solution replay, learning,
+progress and localisation. Release builds can also be checked without signing:
+
+```bash
+xcodebuild -project iRubikCube.xcodeproj -scheme iRubikCube \
+  -configuration Release -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+Settings and learning progress sync through iCloud key-value storage. Solve history
+is local SwiftData storage. Play supports 2×2, 3×3 and 4×4; the scanner and the
+solvers work with 3×3 cubes. Scrambles use random moves, not official competition
+random-state generation, and inspection does not apply +2/DNF penalties.
+
+Camera accuracy with a physical cube, gesture feel, audio interruptions, haptics
+and iCloud sync between signed-in devices still require physical-device testing.
+
 ## 📄 License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for details.

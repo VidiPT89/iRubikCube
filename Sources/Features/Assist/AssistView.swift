@@ -80,6 +80,7 @@ struct AssistView: View {
         } message: {
             Text(app.t(model.error?.messageKey ?? "validation.invalidCorner"))
         }
+        .onDisappear { model.deactivate() }
         .onAppear { model.session.applySettings() }
     }
 

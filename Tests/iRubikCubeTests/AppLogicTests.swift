@@ -123,7 +123,211 @@ struct AppLogicTests {
         #expect(model.session.state == scrambled)
         #expect(model.phase == .waiting)
         #expect(model.moves == 0)
-        #expect(model.elapsed(at: .now) == 0)
+        #expect(model.elapsed() == 0)
+    }
+
+    @Test("Button turns commit a pending gesture before changing the logical cube")
+    func gestureThenButton() {
+        let session = CubeSession(model: nil)
+        let gesture = Turn.face(.R)
+        session.scene.snap = SnapState(axis: gesture.axis, layer: 2, angle: -1, quarters: gesture.quarters)
+        session.perform(.face(.U))
+        session.scene.finishAnimations()
+        #expect(session.history == [gesture, .face(.U)])
+        #expect(session.state == CubeState().applying([gesture, .face(.U)]))
+        #expect(session.scene.displayed == session.state)
+    }
+
+    @Test("Undo includes the gesture that is still snapping")
+    func undoPendingGesture() {
+        let session = CubeSession(model: nil)
+        session.perform(.face(.R))
+        session.scene.finishAnimations()
+        session.scene.snap = SnapState(axis: .y, layer: 2, angle: -1, quarters: -1)
+        session.undo()
+        session.scene.finishAnimations()
+        #expect(session.history == [.face(.R)])
+        #expect(session.future == [.face(.U)])
+        #expect(session.scene.displayed == session.state)
+        #expect(session.state == CubeState().applying(.face(.R)))
+    }
+
+    @Test("Changing size clears the previous round and rejects unsupported sizes")
+    func sizeClearsRound() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        model.session.perform(.face(.R))
+        model.togglePause()
+        model.changeSize(4)
+        #expect(model.phase == .idle)
+        #expect(model.size == 4)
+        #expect(model.moves == 0)
+        #expect(model.scramble.isEmpty)
+        #expect(model.elapsed() == 0)
+        #expect(model.session.scene.interaction == .full)
+        model.changeSize(0)
+        #expect(model.size == 4)
+    }
+
+    @Test("Paused rounds reject button turns and freeze elapsed time")
+    func pauseBlocksMoves() async throws {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        model.session.perform(.face(.R))
+        model.togglePause()
+        let state = model.session.state
+        let time = model.elapsed()
+        model.session.perform(.face(.U))
+        try await Task.sleep(for: .milliseconds(30))
+        #expect(model.session.state == state)
+        #expect(model.elapsed() == time)
+        model.togglePause()
+        try await Task.sleep(for: .milliseconds(30))
+        #expect(model.elapsed() > time)
+    }
+
+    @Test("Saved solutions include rotations made during inspection and solving")
+    func savedSolutionReplays() throws {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        var recorded: [Turn] = []
+        model.onSolved = { _, _, turns in recorded = turns }
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        model.session.perform(.rotation(.x))
+        #expect(model.phase == .waiting)
+        let solution = try TwoPhaseSolver.solve(model.session.state)
+        model.session.perform(solution[0])
+        model.session.perform(.rotation(.y))
+        model.session.perform(.rotation(.y, -1))
+        model.session.perform(Array(solution.dropFirst()), source: .user)
+        #expect(model.phase == .solved)
+        #expect(recorded.first == .rotation(.x))
+        #expect(recorded.filter { $0.isWholeCube(size: 3) }.count == 3)
+        #expect(model.moves == solution.count)
+        #expect(CubeState().applying(model.scramble).applying(recorded).isSolved)
+    }
+
+    @Test("A previous solve cannot present its result after restarting", arguments: [false, true])
+    func staleResult(animationFinished: Bool) async throws {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        model.session.perform(model.scramble.reversed().map(\.inverse), source: .user)
+        #expect(model.phase == .solved)
+        if animationFinished { model.session.scene.finishAnimations() }
+        let bursts = model.confetti
+        model.restart()
+        try await Task.sleep(for: .seconds(1.6))
+        #expect(model.phase == .waiting)
+        #expect(model.result == nil)
+        #expect(model.confetti == bursts)
+    }
+
+    @Test("Solving on the first turn still completes the round")
+    func oneMoveSolve() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app)
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        model.session.load(CubeState().applying(.face(.R)))
+        var completions = 0
+        model.onSolved = { _, _, _ in completions += 1 }
+        model.session.perform(.face(.R, -1))
+        #expect(model.phase == .solved)
+        #expect(completions == 1)
+    }
+
+    @Test("Repeated quiz replay only applies one demonstration move")
+    func quizReplay() async throws {
+        let app = AppModel(defaults: freshDefaults())
+        let model = LessonModel(lesson: .notation, app: app)
+        model.tab = .practice
+        model.startQuiz()
+        let answer = try #require(model.quiz?.answer)
+        model.replayQuestion()
+        model.replayQuestion()
+        try await Task.sleep(for: .milliseconds(600))
+        #expect(model.session.state == CubeState().applying(try Notation.parseToken(answer, size: 3)))
+        #expect(model.session.history.count == 1)
+    }
+
+    @Test("Old quiz answers cannot advance a new quiz or a different tab")
+    func quizLifecycle() async throws {
+        let app = AppModel(defaults: freshDefaults())
+        let model = LessonModel(lesson: .notation, app: app)
+        model.tab = .practice
+        model.startQuiz()
+        model.answer(try #require(model.quiz?.answer))
+        model.startQuiz()
+        try await Task.sleep(for: .milliseconds(1250))
+        #expect(model.quiz?.round == 0)
+        #expect(model.quiz?.score == 0)
+        model.answer(try #require(model.quiz?.answer))
+        model.tab = .how
+        try await Task.sleep(for: .milliseconds(1250))
+        #expect(model.quiz == nil)
+        #expect(model.session.state.isSolved)
+    }
+
+    @Test("Restarting practice cannot complete the previous queued goal")
+    func stalePracticeGoal() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = LessonModel(lesson: .whiteCross, app: app)
+        model.tab = .practice
+        model.session.load(LessonModel.demoState(for: .whiteCross).applying(.face(.R)))
+        model.session.perform(.face(.R, -1))
+        #expect(model.goalReached)
+        model.startPractice()
+        model.session.scene.finishAnimations()
+        #expect(!model.goalReached)
+        #expect(model.confetti == 0)
+        #expect(!model.isCompleted)
+    }
+
+    @Test("Reset cancels a queued Assist celebration")
+    func assistReset() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = AssistModel(app: app, state: CubeState().applying(.face(.R)))
+        model.session.perform(.face(.R, -1), source: .program)
+        model.reset()
+        #expect(model.isSolved)
+        #expect(model.confetti == 0)
+    }
+
+    @Test("Assist playback can step back, stop and compute a fresh hint")
+    func assistPlayback() async throws {
+        let app = AppModel(defaults: freshDefaults())
+        let start = CubeState().applying([.face(.R), .face(.U)])
+        let model = AssistModel(app: app, state: start)
+        model.solveAll()
+        for _ in 0..<500 where model.playback == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(model.playback != nil)
+        model.stepForward()
+        model.session.scene.finishAnimations()
+        model.stepBackward()
+        model.session.scene.finishAnimations()
+        #expect(model.session.state == start)
+        model.stopPlayback()
+        #expect(model.playback == nil)
+        #expect(model.currentStep == nil)
+        model.showHint()
+        for _ in 0..<500 where model.isComputing {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(model.hintTurn != nil)
+        let solution = try #require(model.solution)
+        #expect(start.applying(solution).isSolved)
+        model.deactivate()
+        #expect(model.hintTurn == nil)
+        #expect(!model.isComputing)
     }
 
     // MARK: Progress

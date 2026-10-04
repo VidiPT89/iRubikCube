@@ -23,6 +23,7 @@ final class LessonModel {
     }
 
     struct Quiz {
+        let id = UUID()
         var round = 0
         var score = 0
         var answer = ""
@@ -47,7 +48,10 @@ final class LessonModel {
     /// Algorithm being shown move by move, if any.
     private(set) var demo: AlgorithmDemo?
     @ObservationIgnored private var demoTask: Task<Void, Never>?
-    var quiz: Quiz?
+    private(set) var quiz: Quiz?
+    @ObservationIgnored private var questionTask: Task<Void, Never>?
+    @ObservationIgnored private var answerTask: Task<Void, Never>?
+    @ObservationIgnored private var practiceID = UUID()
 
     @ObservationIgnored private weak var app: AppModel?
 
@@ -75,6 +79,7 @@ final class LessonModel {
     // MARK: Demonstration
 
     private func tabChanged() {
+        cancelQuiz()
         feedback = .none
         demoTask?.cancel()
         demo = nil
@@ -88,6 +93,8 @@ final class LessonModel {
     }
 
     func showDemo() {
+        practiceID = UUID()
+        practising = false
         session.load(Self.demoState(for: lesson))
         session.scene.interaction = .orbitOnly
         session.scene.highlighted = highlight(for: lesson)
@@ -110,7 +117,6 @@ final class LessonModel {
         session.scene.whenIdle { [weak self] in self?.session.applySettings() }
     }
 
-    /// Shows the case an algorithm solves, then solves it slowly.
     /// Shows the case an algorithm solves, then plays it one move at a
     /// time, highlighting each move, so it can be followed on the cube.
     func watch(_ algorithm: Algorithm) {
@@ -118,7 +124,7 @@ final class LessonModel {
         let start = Self.demoState(for: lesson).applying(LessonCoach.inverse(of: algorithm.turns))
         session.load(start)
         session.scene.highlighted = nil
-        demo = AlgorithmDemo(algorithm: algorithm, start: start)
+        demo = AlgorithmDemo(algorithm: algorithm)
         runDemo(after: 0.8)
     }
 
@@ -150,6 +156,7 @@ final class LessonModel {
     }
 
     func closeDemo() {
+        cancelQuiz()
         demoTask?.cancel()
         demo = nil
         showDemo()
@@ -230,6 +237,9 @@ final class LessonModel {
 
     func startPractice() {
         guard let start = LessonCoach.practiceCase(for: lesson) else { return }
+        practiceID = UUID()
+        practising = false
+        goalReached = false
         session.load(start)
         session.scene.highlighted = nil
         session.scene.interaction = .full
@@ -283,10 +293,14 @@ final class LessonModel {
     }
 
     private func reachGoal() {
+        guard !goalReached else { return }
+        practising = false
+        session.scene.interaction = .orbitOnly
+        let id = practiceID
         goalReached = true
         feedback = .goal
         session.scene.whenIdle { [weak self] in
-            guard let self else { return }
+            guard let self, self.practiceID == id, self.goalReached else { return }
             self.session.scene.celebrate()
             self.confetti += 1
             self.app?.play(.solved)
@@ -305,8 +319,15 @@ final class LessonModel {
     static let quizTokens = ["R", "R'", "L", "L'", "U", "U'", "D", "D'", "F", "F'", "B", "B'", "R2", "U2", "F2", "M", "x", "y"]
 
     func startQuiz() {
+        cancelQuiz()
         quiz = Quiz()
         nextQuestion()
+    }
+
+    private func cancelQuiz() {
+        questionTask?.cancel()
+        answerTask?.cancel()
+        quiz = nil
     }
 
     private func nextQuestion() {
@@ -327,11 +348,12 @@ final class LessonModel {
     }
 
     func replayQuestion() {
-        guard let answer = quiz?.answer, let turn = try? Notation.parseToken(answer, size: 3) else { return }
+        guard let quiz, !quiz.isOver, let turn = try? Notation.parseToken(quiz.answer, size: 3) else { return }
+        questionTask?.cancel()
         session.load(CubeState())
-        Task { @MainActor [weak self] in
+        questionTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(0.4))
-            guard let self else { return }
+            guard !Task.isCancelled, let self, self.quiz?.id == quiz.id, self.quiz?.round == quiz.round else { return }
             self.session.scene.turnDuration = 0.7
             self.session.perform(turn, source: .program)
             self.session.scene.whenIdle { [weak self] in self?.session.applySettings() }
@@ -339,7 +361,7 @@ final class LessonModel {
     }
 
     func answer(_ option: String) {
-        guard var current = quiz, current.picked == nil else { return }
+        guard var current = quiz, !current.isOver, current.picked == nil, current.options.contains(option) else { return }
         current.picked = option
         if option == current.answer {
             current.score += 1
@@ -348,9 +370,9 @@ final class LessonModel {
             app?.play(.wrong)
         }
         quiz = current
-        Task { @MainActor [weak self] in
+        answerTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(1.1))
-            guard let self, var latest = self.quiz else { return }
+            guard !Task.isCancelled, let self, var latest = self.quiz, latest.id == current.id, latest.round == current.round else { return }
             latest.round += 1
             self.quiz = latest
             if latest.isOver {
@@ -365,15 +387,13 @@ final class LessonModel {
 /// Move-by-move playback of an algorithm in a lesson.
 struct AlgorithmDemo {
     let algorithm: Algorithm
-    let start: CubeState
     let turns: [Turn]
     let tokens: [String]
     var index = 0
     var isPlaying = true
 
-    init(algorithm: Algorithm, start: CubeState) {
+    init(algorithm: Algorithm) {
         self.algorithm = algorithm
-        self.start = start
         turns = algorithm.turns
         tokens = algorithm.notation.split(separator: " ").map(String.init)
     }

@@ -16,7 +16,6 @@ final class Haptics {
         case tap
     }
 
-    var isEnabled = true
     private var engine: CHHapticEngine?
     private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
     private let light = UIImpactFeedbackGenerator(style: .light)
@@ -30,7 +29,6 @@ final class Haptics {
         engine?.resetHandler = { [weak self] in
             Task { @MainActor in try? self?.engine?.start() }
         }
-        engine?.stoppedHandler = { _ in }
         try? engine?.start()
     }
 
@@ -40,7 +38,6 @@ final class Haptics {
     }
 
     func play(_ pattern: Pattern) {
-        guard isEnabled else { return }
         switch pattern {
         case .detent: custom([(0, 0.45, 0.9)], fallback: { light.impactOccurred(intensity: 0.6) })
         case .snap: custom([(0, 0.75, 0.55)], fallback: { medium.impactOccurred() })

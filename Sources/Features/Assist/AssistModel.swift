@@ -45,6 +45,7 @@ final class AssistModel {
     @ObservationIgnored private var computeTask: Task<Void, Never>?
     @ObservationIgnored private var playTask: Task<Void, Never>?
     @ObservationIgnored private var solutionState: CubeState?
+    @ObservationIgnored private var revision = UUID()
 
     init(app: AppModel, state: CubeState? = nil) {
         self.app = app
@@ -70,22 +71,22 @@ final class AssistModel {
 
     func scramble() {
         stopPlayback()
+        invalidate()
         session.load(CubeState())
         session.animateSetup(Scrambler.scramble(size: 3))
         app?.play(.whoosh)
-        invalidate()
     }
 
     func load(_ state: CubeState) {
         stopPlayback()
-        session.load(state)
         invalidate()
+        session.load(state)
     }
 
     func reset() {
         stopPlayback()
-        session.load(CubeState())
         invalidate()
+        session.load(CubeState())
     }
 
     // MARK: Help
@@ -145,7 +146,19 @@ final class AssistModel {
 
     func stopPlayback() {
         playTask?.cancel()
+        if playback != nil {
+            solution = nil
+            solutionState = nil
+            steps = nil
+        }
         playback = nil
+    }
+
+    func deactivate() {
+        stopPlayback()
+        invalidate()
+        // Release any playback continuation waiting for the disappearing view.
+        session.scene.finishAnimations()
     }
 
     private func runPlayback() {
@@ -154,7 +167,7 @@ final class AssistModel {
             while let self, var current = self.playback, current.isPlaying, !current.isFinished {
                 await self.waitUntilIdle()
                 try? await Task.sleep(for: .seconds(0.25 / self.speed.rawValue))
-                guard !Task.isCancelled, let latest = self.playback, latest.isPlaying else { return }
+                guard !Task.isCancelled, let latest = self.playback, latest.isPlaying, !latest.isFinished else { return }
                 current = latest
                 let turn = current.turns[current.index]
                 current.index += 1
@@ -183,24 +196,22 @@ final class AssistModel {
 
     private func moved(_ turn: Turn, source: CubeSession.Source) {
         clearHint()
-        if source == .program, let solution, let first = solution.first, first.isEquivalent(to: turn) || playback != nil {
-            // Following the plan: keep the rest of it.
-            if playback == nil {
-                self.solution = Array(solution.dropFirst())
-                solutionState = session.state
-                trimSteps()
-            } else {
-                // Playback keeps its own copy; hints are recomputed afterwards.
-                self.solution = nil
-                solutionState = nil
-            }
-        } else if source != .program {
+        if source == .program, playback != nil {
+            // Playback owns the complete plan; cached hints no longer match.
+            solution = nil
+            solutionState = nil
+        } else if source == .program, let solution, let first = solution.first, first.isEquivalent(to: turn) {
+            self.solution = Array(solution.dropFirst())
+            solutionState = session.state
+            trimSteps()
+        } else {
             stopPlayback()
             invalidate()
         }
         if isSolved {
+            let id = revision
             session.scene.whenIdle { [weak self] in
-                guard let self, self.isSolved else { return }
+                guard let self, self.revision == id, self.isSolved else { return }
                 self.session.scene.celebrate()
                 self.confetti += 1
                 self.app?.play(.solved)
@@ -211,12 +222,15 @@ final class AssistModel {
 
     private func trimSteps() {
         guard var list = steps, !list.isEmpty else { return }
+        while let first = list.first, first.turns.isEmpty { list.removeFirst() }
+        guard !list.isEmpty else { steps = []; return }
         list[0].turns.removeFirst()
         if list[0].turns.isEmpty { list.removeFirst() }
         steps = list
     }
 
     private func invalidate() {
+        revision = UUID()
         computeTask?.cancel()
         solution = nil
         steps = nil
@@ -229,6 +243,7 @@ final class AssistModel {
     /// Runs `action` with a solution for the current cube, computing it off
     /// the main thread when needed.
     private func withSolution(_ action: @escaping ([Turn]) -> Void) {
+        session.scene.finishDragImmediately()
         let state = session.state
         if let solution, solutionState == state {
             action(solution)
