@@ -34,12 +34,14 @@ final class ProgressStore {
         var achievements: [String: Date] = [:]
         var activeDays: Set<String> = []
         var dailyTimes: [String: Double] = [:]
+        var statisticsResetAt: Date?
     }
 
     private(set) var completedLessons: Set<LessonID> = []
     private(set) var achievements: [Achievement: Date] = [:]
     private(set) var activeDays: Set<String> = []
     private(set) var dailyTimes: [String: Double] = [:]
+    private(set) var statisticsResetAt: Date?
 
     static let storageKey = "progress.v1"
     @ObservationIgnored private let defaults: UserDefaults
@@ -58,7 +60,7 @@ final class ProgressStore {
         Snapshot(completedLessons: Set(completedLessons.map(\.rawValue)),
                  achievements: Dictionary(uniqueKeysWithValues: achievements.map { ($0.key.rawValue, $0.value) }),
                  activeDays: activeDays,
-                 dailyTimes: dailyTimes)
+                 dailyTimes: dailyTimes, statisticsResetAt: statisticsResetAt)
     }
 
     private func load(_ snapshot: Snapshot) {
@@ -67,7 +69,8 @@ final class ProgressStore {
             Achievement(rawValue: key).map { ($0, date) }
         })
         activeDays = snapshot.activeDays
-        dailyTimes = snapshot.dailyTimes
+        dailyTimes = snapshot.dailyTimes.filter { $0.value.isFinite && $0.value >= 0 }
+        statisticsResetAt = snapshot.statisticsResetAt
     }
 
     /// Merges progress from another device: nothing learnt is ever lost.
@@ -77,14 +80,23 @@ final class ProgressStore {
         merged.completedLessons.formUnion(remote.completedLessons)
         merged.achievements.merge(remote.achievements) { min($0, $1) }
         merged.activeDays.formUnion(remote.activeDays)
-        merged.dailyTimes.merge(remote.dailyTimes) { min($0, $1) }
+        let localReset = statisticsResetAt ?? .distantPast
+        let remoteReset = remote.statisticsResetAt ?? .distantPast
+        let validRemoteTimes = remote.dailyTimes.filter { $0.value.isFinite && $0.value >= 0 }
+        if remoteReset > localReset {
+            merged.dailyTimes = validRemoteTimes
+            merged.statisticsResetAt = remote.statisticsResetAt
+        } else if remoteReset == localReset {
+            merged.dailyTimes.merge(validRemoteTimes) { min($0, $1) }
+        }
         guard merged != snapshot else { return }
         load(merged)
         persist()
     }
 
     /// Clears solve-related progress only (used by "reset statistics").
-    func resetStatistics() {
+    func resetStatistics(on date: Date = .now) {
+        statisticsResetAt = max(date, (statisticsResetAt ?? .distantPast).addingTimeInterval(0.001))
         dailyTimes = [:]
         persist()
     }
@@ -111,14 +123,16 @@ final class ProgressStore {
 
     /// Records a finished solve; returns achievements unlocked by it.
     @discardableResult
-    func recordSolve(time: TimeInterval, size: Int, isDaily: Bool, on date: Date = .now) -> [Achievement] {
+    func recordSolve(time: TimeInterval, size: Int, isDaily: Bool, dailyDate: Date? = nil,
+                     on date: Date = .now) -> [Achievement] {
+        guard time.isFinite, time >= 0, CubeState.supportedSizes.contains(size) else { return [] }
         var unlocked = markActive(on: date)
         unlocked += unlock(.firstSolve, on: date)
         if size == 3 && time < 120 { unlocked += unlock(.underTwoMinutes, on: date) }
         if size == 3 && time < 60 { unlocked += unlock(.underOneMinute, on: date) }
         if size >= 4 { unlocked += unlock(.bigCube, on: date) }
         if isDaily {
-            let key = dayKey(date)
+            let key = dayKey(dailyDate ?? date)
             dailyTimes[key] = min(dailyTimes[key] ?? .infinity, time)
             unlocked += unlock(.dailyChallenge, on: date)
         }

@@ -224,12 +224,14 @@ struct Wordmark: View {
 extension TimeInterval {
     /// Speedcubing format: `12.34` or `1:02.34`.
     var cubeTime: String {
-        let hundredths = Int((self * 100).rounded())
+        let rounded = (self * 100).rounded()
+        guard rounded.isFinite, self >= 0, rounded < Double(Int.max) else { return "--" }
+        let hundredths = Int(rounded)
         let minutes = hundredths / 6000
         let seconds = (hundredths / 100) % 60
         let fraction = hundredths % 100
         if minutes > 0 {
-            return String(format: "%d:%02d.%02d", minutes, seconds, fraction)
+            return "\(minutes):" + String(format: "%02d.%02d", seconds, fraction)
         }
         return String(format: "%d.%02d", seconds, fraction)
     }

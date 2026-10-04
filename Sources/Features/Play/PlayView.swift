@@ -3,6 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct PlayView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(AppModel.self) private var app
     @Environment(\.palette) private var palette
     @Environment(\.modelContext) private var context
@@ -48,11 +49,16 @@ struct PlayView: View {
             .environment(app)
             .presentationDetents([.medium])
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { model.refreshInspection() }
+        }
         .onAppear {
             model.session.applySettings()
             showPad = app.settings.showNotationPanel
-            model.bestTime = { size in bestTime(for: size) }
-            model.onSolved = { result, scramble, solution in save(result, scramble: scramble, solution: solution) }
+            model.bestTime = { [context] size in Self.bestTime(for: size, context: context) }
+            model.onSolved = { [app, context] result, scramble, solution in
+                Self.save(result, scramble: scramble, solution: solution, app: app, context: context)
+            }
         }
     }
 
@@ -153,21 +159,23 @@ struct PlayView: View {
 
     // MARK: Records
 
-    private func bestTime(for size: Int) -> TimeInterval? {
+    private static func bestTime(for size: Int, context: ModelContext) -> TimeInterval? {
         var descriptor = FetchDescriptor<SolveRecord>(predicate: #Predicate { $0.size == size },
                                                       sortBy: [SortDescriptor(\.duration)])
         descriptor.fetchLimit = 1
         return (try? context.fetch(descriptor))?.first?.duration
     }
 
-    private func save(_ result: PlayModel.Result, scramble: [Turn], solution: [Turn]) {
+    private static func save(_ result: PlayModel.Result, scramble: [Turn], solution: [Turn],
+                             app: AppModel, context: ModelContext) {
         let record = SolveRecord(duration: result.time, moveCount: result.moves, size: result.size,
                                  scramble: Notation.format(scramble, size: result.size),
                                  solution: Notation.format(solution, size: result.size),
                                  isDaily: result.isDaily)
         context.insert(record)
         try? context.save()
-        let unlocked = app.progress.recordSolve(time: result.time, size: result.size, isDaily: result.isDaily)
+        let unlocked = app.progress.recordSolve(time: result.time, size: result.size, isDaily: result.isDaily,
+                                                dailyDate: result.dailyDate)
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(2.2))
             app.announce(unlocked)

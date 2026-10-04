@@ -107,7 +107,9 @@ xcodebuild -project iRubikCube.xcodeproj -scheme iRubikCube \
 
 ## Reliability and validation
 
-The timer uses a monotonic clock. Saved solutions retain whole-cube rotations
+The timer and inspection countdown use a monotonic clock. If the app resumes after
+the inspection deadline, timing catches up from that deadline. Daily results stay
+attached to the original challenge date even when completed after midnight. Saved solutions retain whole-cube rotations
 (including inspection rotations), so the recorded sequence can reproduce the solve.
 Restarting a round or changing lessons cancels delayed results and quiz actions.
 
@@ -122,7 +124,9 @@ xcodebuild -project iRubikCube.xcodeproj -scheme iRubikCube \
 ```
 
 Settings and learning progress sync through iCloud key-value storage. Solve history
-is local SwiftData storage. Play supports 2×2, 3×3 and 4×4; the scanner and the
+is local SwiftData storage. Resetting statistics also syncs a reset marker, so old
+daily times cannot reappear when another device reconnects. Devices should run the
+updated app to share this reset behaviour. Play supports 2×2, 3×3 and 4×4; the scanner and the
 solvers work with 3×3 cubes. Scrambles use random moves, not official competition
 random-state generation, and inspection does not apply +2/DNF penalties.
 

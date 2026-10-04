@@ -70,7 +70,6 @@ public enum Algorithms {
         ollAngle, ollH, ollPi, ollHeadlights, ollT, ollBowtie, pllT, pllY, pllH, pllZ,
     ]
 
-    public static func named(_ id: String) -> Algorithm? { all.first { $0.id == id } }
 }
 
 extension Turn {

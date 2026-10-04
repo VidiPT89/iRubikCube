@@ -25,6 +25,7 @@ final class PlayModel {
         var previousBest: TimeInterval?
         var size: Int
         var isDaily: Bool
+        var dailyDate: Date?
         var isNewBest: Bool { previousBest.map { time < $0 } ?? true }
     }
 
@@ -33,7 +34,7 @@ final class PlayModel {
     private(set) var phase: Phase = .idle
     private(set) var scramble: [Turn] = []
     private(set) var moves = 0
-    private(set) var inspectionEnd: Date?
+    private(set) var inspectionEnd: ContinuousClock.Instant?
     private var timerStart: ContinuousClock.Instant?
     private(set) var accumulated: TimeInterval = 0
     var result: Result?
@@ -46,9 +47,13 @@ final class PlayModel {
     @ObservationIgnored private weak var model: AppModel?
     @ObservationIgnored private var inspectionTask: Task<Void, Never>?
     @ObservationIgnored private var roundID = UUID()
+    @ObservationIgnored private var scrambleDate: Date?
+    @ObservationIgnored private let now: () -> ContinuousClock.Instant
     @ObservationIgnored private var resultTask: Task<Void, Never>?
 
-    init(model: AppModel, size: Int = 3, isDaily: Bool = false) {
+    init(model: AppModel, size: Int = 3, isDaily: Bool = false,
+         now: @escaping () -> ContinuousClock.Instant = { .now }) {
+        self.now = now
         self.model = model
         self.isDaily = isDaily
         session = CubeSession(size: isDaily ? 3 : size, model: model)
@@ -59,7 +64,7 @@ final class PlayModel {
 
     func elapsed() -> TimeInterval {
         guard let timerStart else { return accumulated }
-        let duration = timerStart.duration(to: .now).components
+        let duration = timerStart.duration(to: now()).components
         return accumulated + Double(duration.seconds) + Double(duration.attoseconds) / 1e18
     }
 
@@ -71,13 +76,15 @@ final class PlayModel {
         guard [2, 3, 4].contains(newSize), newSize != size, !isDaily else { return }
         stopClock()
         scramble = []
+        scrambleDate = nil
         session.load(CubeState(size: newSize))
         session.scene.resetView()
     }
 
-    func newScramble() {
+    func newScramble(on date: Date = .now) {
         stopClock()
-        let turns = isDaily ? Scrambler.daily(for: .now) : Scrambler.scramble(size: size)
+        scrambleDate = date
+        let turns = isDaily ? Scrambler.daily(for: date) : Scrambler.scramble(size: size)
         scramble = turns
         session.load(CubeState(size: size))
         phase = .scrambling
@@ -92,12 +99,12 @@ final class PlayModel {
         phase = .waiting
         session.scene.interaction = .full
         guard inspectionEnabled else { return }
-        let end = Date.now.addingTimeInterval(15)
+        let end = now().advanced(by: .seconds(15))
         inspectionEnd = end
         inspectionTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(15))
+            try? await ContinuousClock().sleep(until: end)
             guard !Task.isCancelled, let self, self.phase == .waiting else { return }
-            self.startClock()
+            self.refreshInspection()
         }
     }
 
@@ -120,7 +127,7 @@ final class PlayModel {
             phase = .paused
             session.scene.interaction = .none
         case .paused:
-            timerStart = .now
+            timerStart = now()
             phase = .solving
             session.scene.interaction = .full
         default:
@@ -141,6 +148,7 @@ final class PlayModel {
     // MARK: Moves and clock
 
     private func moved(_ turn: Turn, source: CubeSession.Source) {
+        refreshInspection()
         let isRotation = turn.isWholeCube(size: size)
         switch phase {
         case .waiting where !isRotation && source != .program:
@@ -159,10 +167,17 @@ final class PlayModel {
         moves = session.history.filter { !$0.isWholeCube(size: size) }.count
     }
 
+    /// Catch up after suspension, using the original deadline rather than wake-up time.
+    func refreshInspection() {
+        guard phase == .waiting, let inspectionEnd, now() >= inspectionEnd else { return }
+        startClock()
+    }
+
     private func startClock() {
+        let instant = now()
+        timerStart = min(instant, inspectionEnd ?? instant)
         inspectionTask?.cancel()
         inspectionEnd = nil
-        timerStart = .now
         accumulated = 0
         phase = .solving
     }
@@ -185,7 +200,7 @@ final class PlayModel {
         timerStart = nil
         accumulated = time
         phase = .solved
-        let outcome = Result(time: time, moves: moves, previousBest: bestTime?(size), size: size, isDaily: isDaily)
+        let outcome = Result(time: time, moves: moves, previousBest: bestTime?(size), size: size, isDaily: isDaily, dailyDate: isDaily ? scrambleDate : nil)
         onSolved?(outcome, scramble, session.history)
         let id = roundID
         session.scene.whenIdle { [weak self] in

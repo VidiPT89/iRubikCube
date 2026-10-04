@@ -83,11 +83,13 @@ struct ScrambleCard: View {
 struct InspectionBadge: View {
     @Environment(AppModel.self) private var app
     @Environment(\.palette) private var palette
-    let end: Date
+    let end: ContinuousClock.Instant
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.25)) { timeline in
-            let remaining = max(0, Int(ceil(end.timeIntervalSince(timeline.date))))
+        TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+            let duration = ContinuousClock.now.duration(to: end).components
+            let seconds = Double(duration.seconds) + Double(duration.attoseconds) / 1e18
+            let remaining = max(0, Int(ceil(seconds)))
             HStack(spacing: 8) {
                 Image(systemName: "eye.fill")
                 Text(app.t("play.inspection"))

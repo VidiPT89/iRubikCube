@@ -330,6 +330,119 @@ struct AppLogicTests {
         #expect(!model.isComputing)
     }
 
+    @Test("Late inspection callbacks count from the original deadline")
+    func inspectionAfterSuspension() {
+        let app = AppModel(defaults: freshDefaults())
+        app.settings.inspection = true
+        var instant = ContinuousClock.now
+        let model = PlayModel(model: app, now: { instant })
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        instant = instant.advanced(by: .seconds(22))
+        model.refreshInspection()
+        #expect(model.phase == .solving)
+        #expect(model.elapsed() == 7)
+        #expect(model.inspectionEnd == nil)
+        model.refreshInspection()
+        #expect(model.elapsed() == 7)
+    }
+
+    @Test("Moves before and after the inspection deadline use the correct start", arguments: [5, 20])
+    func inspectionFirstMove(seconds: Int) {
+        let app = AppModel(defaults: freshDefaults())
+        app.settings.inspection = true
+        var instant = ContinuousClock.now
+        let model = PlayModel(model: app, now: { instant })
+        model.newScramble()
+        model.session.scene.finishAnimations()
+        instant = instant.advanced(by: .seconds(seconds))
+        model.session.perform(.face(.R))
+        #expect(model.phase == .solving)
+        #expect(model.elapsed() == Double(max(0, seconds - 15)))
+    }
+
+    @Test("A daily restart and result retain the original challenge date")
+    func dailyChallengeDate() {
+        let app = AppModel(defaults: freshDefaults())
+        let model = PlayModel(model: app, isDaily: true)
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        var result: PlayModel.Result?
+        model.onSolved = { outcome, _, _ in result = outcome }
+        model.newScramble(on: date)
+        model.session.scene.finishAnimations()
+        #expect(model.scramble == Scrambler.daily(for: date))
+        model.restart()
+        model.session.perform(model.scramble.reversed().map(\.inverse), source: .user)
+        #expect(result?.dailyDate == date)
+    }
+
+    @Test("Daily time belongs to the challenge day and activity to the completion day")
+    func dailyAcrossMidnight() {
+        let store = ProgressStore(defaults: freshDefaults())
+        let date = store.calendar.date(from: DateComponents(year: 2026, month: 10, day: 3, hour: 23))!
+        let completed = date.addingTimeInterval(7200)
+        store.recordSolve(time: 90, size: 3, isDaily: true, dailyDate: date, on: completed)
+        #expect(store.dailyTime(on: date) == 90)
+        #expect(store.dailyTime(on: completed) == nil)
+        #expect(store.activeDays == [store.dayKey(completed)])
+    }
+
+    @Test("Statistics resets survive relaunch and old cloud snapshots")
+    func statisticsResetMerge() throws {
+        let defaults = freshDefaults()
+        let local = ProgressStore(defaults: defaults)
+        local.completeLesson(.notation)
+        local.recordSolve(time: 90, size: 3, isDaily: true)
+        let old = try JSONEncoder().encode(local.snapshot)
+        local.resetStatistics()
+        let reset = try JSONEncoder().encode(local.snapshot)
+        let reloaded = ProgressStore(defaults: defaults)
+        reloaded.merge(old)
+        #expect(reloaded.dailyTimes.isEmpty)
+        #expect(reloaded.completedLessons.contains(.notation))
+        let remote = ProgressStore(defaults: freshDefaults())
+        remote.merge(old)
+        remote.merge(reset)
+        #expect(remote.dailyTimes.isEmpty)
+        remote.recordSolve(time: 95, size: 3, isDaily: true)
+        reloaded.merge(try JSONEncoder().encode(remote.snapshot))
+        #expect(reloaded.dailyTime() == 95)
+        reloaded.merge(old)
+        #expect(reloaded.dailyTime() == 95)
+    }
+
+    @Test("Older progress without a reset marker remains readable")
+    func legacyProgress() throws {
+        let defaults = freshDefaults()
+        let data = Data(#"{"completedLessons":["notation"],"achievements":{},"activeDays":[],"dailyTimes":{"2026-10-03":42}}"#.utf8)
+        defaults.set(data, forKey: ProgressStore.storageKey)
+        let store = ProgressStore(defaults: defaults)
+        #expect(store.statisticsResetAt == nil)
+        #expect(store.dailyTimes["2026-10-03"] == 42)
+        #expect(store.completedLessons.contains(.notation))
+    }
+
+    @Test("Invalid solve times cannot unlock achievements or corrupt persistence", arguments: [-1.0, Double.infinity, Double.nan])
+    func invalidSolveTime(time: Double) {
+        let store = ProgressStore(defaults: freshDefaults())
+        #expect(store.recordSolve(time: time, size: 3, isDaily: true).isEmpty)
+        #expect(store.achievements.isEmpty)
+        #expect(store.activeDays.isEmpty)
+        #expect(store.dailyTimes.isEmpty)
+    }
+
+    @Test("Time formatting handles corrupt values without trapping", arguments: [-1.0, Double.infinity, Double.nan, Double.greatestFiniteMagnitude])
+    func invalidTimeFormatting(time: Double) {
+        #expect(time.cubeTime == "--")
+    }
+
+    @Test("Time formatting carries rounded hundredths into the next minute")
+    func timeFormatting() {
+        #expect(59.999.cubeTime == "1:00.00")
+        #expect(62.34.cubeTime == "1:02.34")
+        #expect(0.0.cubeTime == "0.00")
+    }
+
     // MARK: Progress
 
     @Test("Achievements unlock once and a week of play makes a streak")
