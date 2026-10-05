@@ -4,6 +4,11 @@
 
 [![Report Bug](https://img.shields.io/badge/Report-Bug-red)](https://github.com/VidiPT89/iRubikCube/issues)
 [![Request Feature](https://img.shields.io/badge/Request-Feature-blue)](https://github.com/VidiPT89/iRubikCube/issues)
+[![CI](https://github.com/VidiPT89/iRubikCube/actions/workflows/ci.yml/badge.svg)](https://github.com/VidiPT89/iRubikCube/actions/workflows/ci.yml)
+
+<p align="center">
+  <img src="assets/home.jpg" alt="iRubikCube home screen: the 3D cube rendered with RealityKit, best times and the Play, Help and Learn modes (shown in Portuguese, the app is bilingual)" width="280">
+</p>
 
 ## ✨ Features
 
