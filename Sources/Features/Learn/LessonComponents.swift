@@ -25,17 +25,31 @@ struct PracticePanel: View {
                 }
             }
             if let next = model.expected.first, !model.goalReached {
-                HStack(spacing: 8) {
-                    Text(app.t("practice.suggested")).font(.rounded(13, .semibold)).foregroundStyle(palette.textDim)
-                    ForEach(Array(model.expected.prefix(6).enumerated()), id: \.offset) { index, turn in
-                        Chip(text: Notation.format(turn), highlighted: index == 0)
-                    }
-                    if model.expected.count > 6 { Text("…").foregroundStyle(palette.textDim) }
+                // With large text the label goes above the chips instead of
+                // squeezing them into a column of letters.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { suggestedLabel; suggestedChips }
+                    VStack(alignment: .leading, spacing: 6) { suggestedLabel; suggestedChips }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(Text(app.t("assist.next") + " " + NotationSpeech.describe(Notation.format(next), model: app)))
             }
             MoveHistoryStrip(turns: model.session.history, size: 3, emptyText: app.t("practice.start"))
+        }
+    }
+
+    private var suggestedLabel: some View {
+        Text(app.t("practice.suggested")).font(.rounded(13, .semibold)).foregroundStyle(palette.textDim)
+            .fixedSize()
+    }
+
+    private var suggestedChips: some View {
+        HStack(spacing: 8) {
+            ForEach(Array(model.expected.prefix(6).enumerated()), id: \.offset) { index, turn in
+                Chip(text: Notation.format(turn), highlighted: index == 0).fixedSize()
+            }
+            if model.expected.count > 6 { Text("…").foregroundStyle(palette.textDim) }
         }
     }
 

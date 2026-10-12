@@ -25,10 +25,15 @@ struct NotationPad: View {
             HStack(spacing: 8) {
                 modifierToggle("′", isOn: $prime, other: $double, label: model.t("notation.primeToggle"))
                 modifierToggle("2", isOn: $double, other: $prime, label: model.t("notation.doubleToggle"))
-                Spacer()
+                // Takes only the room left, so with large text it wraps instead of
+                // pushing the grid below wider than the screen.
                 Text(model.t("notation.padHint"))
                     .font(.rounded(12, .medium))
                     .foregroundStyle(palette.textDim)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
                 ForEach(tokens, id: \.self) { token in
@@ -51,6 +56,8 @@ struct NotationPad: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.45)
+        // Six keys a row, like a keyboard: larger labels no longer fit a phone.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
     private func modifierToggle(_ title: String, isOn: Binding<Bool>, other: Binding<Bool>, label: String) -> some View {

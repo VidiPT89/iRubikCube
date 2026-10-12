@@ -4,6 +4,7 @@ import SwiftUI
 
 struct PlayView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(AppModel.self) private var app
     @Environment(\.palette) private var palette
     @Environment(\.modelContext) private var context
@@ -150,12 +151,16 @@ struct PlayView: View {
             }
             .disabled(model.phase == .scrambling)
             Spacer(minLength: 0)
-            Color.clear.frame(width: 46, height: 1)
+            // Balances the keyboard button so Scramble sits centred; dropped when
+            // large text leaves no room for it.
+            if !typeSize.isAccessibilitySize { Color.clear.frame(width: 46, height: 1) }
             CircleIconButton(systemImage: showPad ? "keyboard.chevron.compact.down" : "keyboard",
                              label: app.t("play.togglePad"), prominent: showPad) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { showPad.toggle() }
             }
         }
+        // Four fixed buttons plus Scramble: past this size the row is wider than a phone.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
     // MARK: Records

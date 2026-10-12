@@ -121,12 +121,16 @@ struct SettingsView: View {
 /// Segmented choice with the brand highlight.
 struct ChoiceRow<Option: Hashable & Identifiable, Label: View>: View {
     @Environment(\.palette) private var palette
+    @Environment(\.dynamicTypeSize) private var typeSize
     let options: [Option]
     @Binding var selection: Option
     @ViewBuilder let label: (Option) -> Label
 
     var body: some View {
-        HStack(spacing: 4) {
+        // Side by side the labels get cut off at accessibility sizes, so stack them.
+        let stacked = typeSize.isAccessibilitySize
+        let layout = stacked ? AnyLayout(VStackLayout(spacing: 4)) : AnyLayout(HStackLayout(spacing: 4))
+        layout {
             ForEach(options) { option in
                 Button {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { selection = option }
@@ -144,7 +148,7 @@ struct ChoiceRow<Option: Hashable & Identifiable, Label: View>: View {
             }
         }
         .padding(4)
-        .background(palette.surfaceRaised.opacity(0.8), in: Capsule())
+        .background(palette.surfaceRaised.opacity(0.8), in: RoundedRectangle(cornerRadius: stacked ? 23 : 100, style: .continuous))
     }
 }
 

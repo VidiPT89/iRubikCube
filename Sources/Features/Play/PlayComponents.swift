@@ -39,6 +39,9 @@ struct TimerDisplay: View {
                 .minimumScaleFactor(0.8)
                 .animation(.easeInOut, value: model.phase)
         }
+        // The 44 pt digits are already large; growing them further with
+        // accessibility text pushed the header past the edge of the screen.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
     private var caption: String {
