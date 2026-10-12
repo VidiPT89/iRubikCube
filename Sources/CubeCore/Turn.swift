@@ -5,8 +5,6 @@ import Foundation
 public struct LayerSet: Hashable, Sendable, Codable {
     public var mask: UInt16
 
-    public init(mask: UInt16) { self.mask = mask }
-
     public init<S: Sequence>(_ layers: S) where S.Element == Int {
         mask = layers.reduce(0) { $0 | (1 << UInt16($1)) }
     }

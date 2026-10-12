@@ -1,4 +1,3 @@
-import CubeCore
 import SwiftUI
 
 /// Big animated card for one of the three modes.

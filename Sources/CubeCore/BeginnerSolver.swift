@@ -139,7 +139,7 @@ public enum BeginnerSolver {
                 let pieceColors = [cube.center(of: .D), cube.center(of: done[1])]
                 positions.append(cube.locateSticker(color: pieceColors[0], partner: pieceColors[1]) ?? targets[i])
             }
-            let path = idaStar(positions: positions, targets: targets, distances: distances,
+            let path = idaStar(positions: positions, distances: distances,
                                permutations: permutations, maxDepth: 10) ?? []
             let turns = path.map { faceTurns[$0] }
             cube.apply(turns)
@@ -168,7 +168,7 @@ public enum BeginnerSolver {
         return distance
     }
 
-    private static func idaStar(positions: [Int], targets: [Int], distances: [[UInt8]],
+    private static func idaStar(positions: [Int], distances: [[UInt8]],
                                 permutations: [[Int]], maxDepth: Int) -> [Int]? {
         func estimate(_ p: [Int]) -> Int {
             p.indices.reduce(0) { max($0, Int(distances[$1][p[$1]])) }

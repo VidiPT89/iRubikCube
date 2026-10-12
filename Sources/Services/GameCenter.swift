@@ -7,7 +7,7 @@ import UIKit
 final class GameCenter {
 
     /// The activity ID of "Resolver o cubo" in App Store Connect.
-    static let solveActivityID = "solve"
+    nonisolated static let solveActivityID = "solve"
 
     private var handlerSet = false
     /// A `GKGameActivity` on iOS 26; `Any` so the app still runs on iOS 18.
@@ -26,9 +26,8 @@ final class GameCenter {
         guard !handlerSet else { return }
         handlerSet = true
         GKLocalPlayer.local.authenticateHandler = { viewController, _ in
-            MainActor.assumeIsolated {
-                if let viewController { Self.present(viewController) }
-            }
+            guard let viewController else { return }
+            Task { @MainActor in Self.present(viewController) }
         }
     }
 
