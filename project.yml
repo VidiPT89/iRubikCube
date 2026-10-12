@@ -30,6 +30,7 @@ targets:
     entitlements:
       path: Config/iRubikCube.entitlements
       properties:
+        com.apple.developer.game-center: true
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
     info:
       path: Config/Info-iOS.plist

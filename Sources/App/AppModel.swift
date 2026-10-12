@@ -20,6 +20,7 @@ final class AppModel {
     @ObservationIgnored let sound = SoundEngine()
     @ObservationIgnored let haptics = Haptics()
     @ObservationIgnored private let cloud = CloudSync()
+    @ObservationIgnored let gameCenter = GameCenter()
     @ObservationIgnored private var started = false
     @ObservationIgnored private let defaults: UserDefaults
 
@@ -42,7 +43,7 @@ final class AppModel {
         String(format: t(key), locale: language.locale, arguments: arguments)
     }
 
-    /// Starts sound, haptics and iCloud; warms the solver tables up.
+    /// Starts sound, haptics, iCloud and Game Center; warms the solver tables up.
     func start() {
         guard !started else { return }
         started = true
@@ -58,6 +59,7 @@ final class AppModel {
         if let remote = cloud.pull(AppSettings.storageKey), defaults.data(forKey: AppSettings.storageKey) == nil {
             settings.apply(remote)
         }
+        gameCenter.signIn()
         Task { await TwoPhaseTables.prepare() }
     }
 

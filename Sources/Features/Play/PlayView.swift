@@ -52,6 +52,7 @@ struct PlayView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.refreshInspection() }
         }
+        .onDisappear { app.gameCenter.gameEnded() }
         .onAppear {
             model.session.applySettings()
             showPad = app.settings.showNotationPanel

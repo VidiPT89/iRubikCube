@@ -92,6 +92,7 @@ final class PlayModel {
         model?.play(.whoosh)
         session.animateSetup(turns)
         session.scene.whenIdle { [weak self] in self?.scrambleFinished() }
+        model?.gameCenter.gameStarted()
     }
 
     private func scrambleFinished() {
@@ -115,6 +116,7 @@ final class PlayModel {
         session.load(CubeState(size: size).applying(scramble))
         phase = .scrambling
         scrambleFinished()
+        model?.gameCenter.gameStarted()
     }
 
     func togglePause() {
@@ -193,6 +195,7 @@ final class PlayModel {
         timerStart = nil
         accumulated = 0
         session.scene.interaction = .full
+        model?.gameCenter.gameEnded()
     }
 
     private func finish() {
@@ -200,6 +203,7 @@ final class PlayModel {
         timerStart = nil
         accumulated = time
         phase = .solved
+        model?.gameCenter.gameEnded()
         let outcome = Result(time: time, moves: moves, previousBest: bestTime?(size), size: size, isDaily: isDaily, dailyDate: isDaily ? scrambleDate : nil)
         onSolved?(outcome, scramble, session.history)
         let id = roundID

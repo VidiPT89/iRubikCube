@@ -59,6 +59,7 @@
 		AF554DB1D04172958393196F /* CubeScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDD50548212D6D895B84146 /* CubeScene.swift */; };
 		B8C1B64C91076876272A9FA2 /* MoveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15BBC096A5CD653539C220F0 /* MoveTests.swift */; };
 		BBB7E01F125FF6285F012E21 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46E79B32D145F9A8F4E7D51C /* AppModel.swift */; };
+		D12A4B4AA1ED38A3EA20981F /* GameCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9A2962F0DA2F8BD1648268 /* GameCenter.swift */; };
 		D84CCBCC0131842FAB99E706 /* PlayComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC5CFA57F0E7CA9C0AD1353E /* PlayComponents.swift */; };
 		D8568EB28233572B9FF0C623 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0103C51B902549BE814B0D9 /* Haptics.swift */; };
 		E45962920AA69123A6DC65DA /* iRubikCubeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 981360188A8B4806C885E536 /* iRubikCubeApp.swift */; };
@@ -184,6 +185,7 @@
 		CD59527D18D2D7986348AC7E /* Coordinates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Coordinates.swift; sourceTree = "<group>"; };
 		D1FF9F103D3FFF8CFE8BCE94 /* BeginnerSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeginnerSolver.swift; sourceTree = "<group>"; };
 		D4338BC9A4EACCFFF6DFA04F /* AssistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistView.swift; sourceTree = "<group>"; };
+		DB9A2962F0DA2F8BD1648268 /* GameCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenter.swift; sourceTree = "<group>"; };
 		DBAD3343F744BAF44E4B80FC /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		DCDD50548212D6D895B84146 /* CubeScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeScene.swift; sourceTree = "<group>"; };
 		DEB854469FEB7A27F3E509BD /* CubeColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeColors.swift; sourceTree = "<group>"; };
@@ -340,6 +342,7 @@
 			isa = PBXGroup;
 			children = (
 				E97D4716D89C41EC5AB56442 /* CloudSync.swift */,
+				DB9A2962F0DA2F8BD1648268 /* GameCenter.swift */,
 				B0103C51B902549BE814B0D9 /* Haptics.swift */,
 				1A65F13E278733BE4391BD44 /* SoundEngine.swift */,
 			);
@@ -650,6 +653,7 @@
 				AF554DB1D04172958393196F /* CubeScene.swift in Sources */,
 				82A7FFF138ADDD1646EB0E19 /* CubeSession.swift in Sources */,
 				A871A5CD37D3C295760BA095 /* CubeView.swift in Sources */,
+				D12A4B4AA1ED38A3EA20981F /* GameCenter.swift in Sources */,
 				D8568EB28233572B9FF0C623 /* Haptics.swift in Sources */,
 				FBEEB6159E8A92F601C9EC12 /* HomeComponents.swift in Sources */,
 				EF8F273E8E06BEF80B5B4014 /* HomeView.swift in Sources */,
