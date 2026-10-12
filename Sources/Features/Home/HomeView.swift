@@ -10,8 +10,8 @@ struct HomeView: View {
     @State private var hero = HeroCube()
     @State private var showSettings = false
     @State private var appeared = false
-    /// Off for one frame when the layout flips, so the old RealityView is gone
-    /// before the new one is built (only one renders at a time).
+    /// Off for one frame when the layout flips, so the old cube view is gone
+    /// before the new one is built.
     @State private var heroReady = true
 
     var body: some View {
@@ -93,7 +93,7 @@ struct HomeView: View {
                            center: .center, startRadius: 0, endRadius: 200)
                 .scaleEffect(appeared ? 1 : 0.6)
                 .allowsHitTesting(false)
-            // Only one RealityView renders at a time, so the hero steps aside
+            // The app has one 3D view (`CubeStage`), so the hero steps aside
             // while another screen with a cube is on top.
             if let session = hero.session, path.isEmpty, heroReady {
                 CubeView(scene: session.scene, accessibilityLabel: app.t("a11y.heroCube"))

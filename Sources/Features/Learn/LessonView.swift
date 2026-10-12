@@ -21,8 +21,8 @@ struct LessonView: View {
             let wide = geometry.size.width > 600
             ZStack {
                 Backdrop()
-                // One layout that changes axis keeps the same RealityView alive; two
-                // branches would build a second one, which stays blank (only one renders).
+                // One layout that changes axis keeps the same cube view alive; two
+                // branches would tear it down and build another.
                 let layout = wide ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
                 layout {
                     VStack(spacing: 12) {

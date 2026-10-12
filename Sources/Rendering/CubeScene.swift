@@ -51,13 +51,14 @@ final class CubeScene {
     @ObservationIgnored let spinner = Entity()
     @ObservationIgnored let stageEntity = Entity()
     @ObservationIgnored let camera = PerspectiveCamera()
+    /// Holds the cube, stage and camera; `CubeStage` puts it in the 3D view.
+    @ObservationIgnored let anchor = AnchorEntity(world: .zero)
     @ObservationIgnored var cubies: [Vec3: ModelEntity] = [:]
     @ObservationIgnored var stickerEntities: [ModelEntity] = []
     @ObservationIgnored var glyphEntities: [ModelEntity] = []
     @ObservationIgnored var hintEntity: Entity?
     @ObservationIgnored var materials = MaterialSet()
     @ObservationIgnored var glyphMeshes: [CubeScheme.Glyph: (mesh: MeshResource, rotation: simd_quatf)] = [:]
-    @ObservationIgnored private var subscription: EventSubscription?
 
     // MARK: Camera
 
@@ -95,28 +96,12 @@ final class CubeScene {
         self.size = size
         displayed = state ?? CubeState(size: size)
         root.addChild(spinner)
+        anchor.addChild(root)
+        anchor.addChild(stageEntity)
+        anchor.addChild(camera)
         buildCube()
         buildStage()
         applyOrbit()
-    }
-
-    /// Adds the scene to a `RealityView` and starts the frame loop.
-    ///
-    /// SwiftUI may build a second RealityView before tearing the first one
-    /// down, and a torn-down view removes whatever it added. Each install
-    /// therefore adds a fresh holder and moves the cube into it, so the old
-    /// view only takes its own empty holder with it.
-    func install(into content: inout RealityViewCameraContent) {
-        let holder = Entity()
-        holder.addChild(root)
-        holder.addChild(stageEntity)
-        holder.addChild(camera)
-        content.add(holder)
-        content.environment = .default
-        subscription = content.subscribe(to: SceneEvents.Update.self) { [weak self] event in
-            self?.tick(event.deltaTime)
-        }
-        updateCamera()
     }
 
     // MARK: Commands

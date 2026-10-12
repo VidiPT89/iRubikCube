@@ -20,8 +20,8 @@ struct PlayView: View {
             ZStack {
                 Backdrop(glow: model.phase == .solved ? 1.6 : 1)
                     .animation(.easeInOut(duration: 0.8), value: model.phase)
-                // One layout that changes axis keeps the same RealityView alive; two
-                // branches would build a second one, which stays blank (only one renders).
+                // One layout that changes axis keeps the same cube view alive; two
+                // branches would tear it down and build another.
                 let layout = wide ? AnyLayout(HStackLayout(spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
                 layout {
                     if !wide { header.frame(maxWidth: 680) }
