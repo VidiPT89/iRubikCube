@@ -6,7 +6,7 @@ import UIKit
 @MainActor
 final class GameCenter {
 
-    /// The game activity set up in App Store Connect for a timed solve.
+    /// The activity ID of "Resolver o cubo" in App Store Connect.
     static let solveActivityID = "solve"
 
     private var handlerSet = false
@@ -38,8 +38,8 @@ final class GameCenter {
         guard isSignedIn, #available(iOS 26.0, *) else { return }
         endActivity()
         let round = round
-        GKGameActivityDefinition.loadGameActivityDefinitions(IDs: [Self.solveActivityID]) { [weak self] definitions, _ in
-            guard let definition = definitions?.first else { return }
+        GKGameActivityDefinition.loadGameActivityDefinitions { [weak self] definitions, _ in
+            guard let definition = definitions?.first(where: { $0.identifier == Self.solveActivityID }) else { return }
             Task { @MainActor in
                 guard let self, self.round == round else { return }
                 let activity = GKGameActivity(definition: definition)
