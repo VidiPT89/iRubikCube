@@ -72,8 +72,10 @@ struct ScrambleCard: View {
                 Text(scramble.isEmpty ? placeholder : Notation.format(scramble, size: size))
                     .font(scramble.isEmpty ? .rounded(13, .medium) : .mono(13, .semibold))
                     .foregroundStyle(scramble.isEmpty ? palette.textDim : palette.text)
-                    .lineLimit(3)
+                    // A scramble that is cut off can't be copied onto a real cube.
+                    .lineLimit(5)
                     .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
